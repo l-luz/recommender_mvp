@@ -11,6 +11,32 @@ Sistema de recomendação de livros utilizando:
 - **MABWiser** para aprendizado por reforço contextual (LinUCB)
 - **pandas + scikit-learn** para processamento de dados
 
+## 🏗️ Estrutura do Projeto
+
+```
+recommender_mvp/
+├── app/                    # Backend FastAPI
+│   ├── api/               # Rotas da API
+│   ├── core/              # Lógica de recomendação (MABWiser)
+│   ├── db/                # Modelos e CRUD SQLAlchemy
+│   ├── utils/             # Configurações, logging, seeds
+│   └── main.py            # Entry point FastAPI
+├── streamlit_app/         # Frontend Streamlit
+│   ├── Login.py           # Autenticação
+│   ├── Home_Slate.py      # Recomendações
+│   ├── Likes.py           # Histórico de likes
+│   ├── Dislikes.py        # Histórico de dislikes
+│   ├── Perfil.py          # Perfil do usuário
+│   ├── Logout.py          # Desconexão
+│   └── components/        # Componentes reutilizáveis
+├── data/                  # Dados (raw, processed, embeddings)
+├── tests/                 # Testes (pytest)
+├── notebooks/             # Análise offline (Jupyter)
+├── run.py                 # Script para iniciar tudo
+├── requirements.txt       # Dependências
+├── .gitignore            # Git ignore
+└── README.md             # Este arquivo
+```
 
 ## 🚀 Como Executar
 
