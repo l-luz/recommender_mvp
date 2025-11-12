@@ -6,6 +6,8 @@ import streamlit as st
 import requests
 from typing import List, Dict
 
+from streamlit_app.config import API_URL
+
 # Configurar página
 st.set_page_config(
     page_title="Recommender MVP - Home",
@@ -47,7 +49,7 @@ def main():
     try:
         # TODO: Fazer request para /slate
         response = requests.post(
-            "http://127.0.0.1:8000/slate",
+             f"{API_URL}/slate",
             params={"user_id": user_id, "n_items": 4}
         )
         recommendations = response.json().get("recommendations", [])

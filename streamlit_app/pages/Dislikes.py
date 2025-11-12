@@ -5,6 +5,8 @@ Streamlit App - Página de Dislikes
 import streamlit as st
 import requests
 
+from streamlit_app.config import API_URL
+
 st.set_page_config(page_title="Meus Dislikes", layout="wide")
 
 
@@ -16,14 +18,17 @@ def main():
     # Verificar login
     if "user_id" not in st.session_state:
         st.warning("⚠️ Faça login para ver seus dislikes")
-        st.stop()
-    
+        st.stop()    
     user_id = st.session_state.user_id
     
     st.write(f"Livros que você não curtiu:")
     
     try:
-        # TODO: Fazer request para /events?user_id=X&event_type=dislike
+        response = requests.get(
+             f"{API_URL}/events",
+            json={"user_id": user_id, "event_type": "dislike"}
+        )
+
         dislikes = []  # response.json().get("events", [])
         
         if dislikes:

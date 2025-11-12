@@ -26,7 +26,7 @@ def run_streamlit():
     """Inicia Streamlit"""
     print("🎨 Iniciando Streamlit...")
     subprocess.run(
-        [sys.executable, "-m", "streamlit", "run", "streamlit_app/Login.py"],
+        [sys.executable, "-m", "streamlit", "run", "streamlit_app/main.py"],
         cwd=os.path.dirname(__file__)
     )
 

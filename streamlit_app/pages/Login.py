@@ -5,6 +5,8 @@ Streamlit App - Página de Login
 import streamlit as st
 import requests
 
+from streamlit_app.config import API_URL
+
 st.set_page_config(page_title="Login", layout="centered")
 
 
@@ -26,9 +28,8 @@ def main():
             return
         
         try:
-            # TODO: Fazer request para /login
             response = requests.post(
-                "http://127.0.0.1:8000/login",
+                 f"{API_URL}/users/login",
                 json={"username": username, "password": password}
             )
             
@@ -86,10 +87,20 @@ def main():
             return
         
         try:
-            # TODO: Fazer request para /register
-            st.success(f"✅ Usuário {new_username} registrado com sucesso! Faça login.")
+            # Fazer request para /users/register
+            response = requests.post(
+                 f"{API_URL}/users/register",
+                json={"username": new_username, "password": new_password}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                st.success(f"✅ Usuário '{new_username}' registrado com sucesso! Faça login.")
+            else:
+                error_msg = response.json().get("detail", "Erro desconhecido")
+                st.error(f"❌ Erro ao registrar: {error_msg}")
         except Exception as e:
-            st.error(f"❌ Erro ao registrar: {e}")
+            st.error(f"❌ Erro ao conectar: {e}")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ def main():
     try:
         # TODO: Fazer request para /profile/{user_id}
         
+        
         col1, col2 = st.columns(2)
         
         with col1:
