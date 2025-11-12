@@ -125,3 +125,33 @@ class UserBase(BaseModel):
     preferred_genres: Optional[str] = None
     created_at: datetime
 
+
+#
+# Slate/Recommendation Schemas
+#
+
+
+class BookRecommendation(BaseModel):
+    """Recommended book info"""
+
+    book_id: int
+    title: str
+    authors: Optional[str] = None
+    avg_rating: Optional[float] = None
+
+
+class SlateRequest(BaseModel):
+    """Request form for getting recommendations"""
+
+    user_id: int = Field(..., gt=0, description="User ID")
+    n_items: int = Field(4, ge=1, le=20, description="Number of recommendations")
+
+
+class SlateResponse(BaseModel):
+    """Response form for recommendations"""
+
+    user_id: int
+    slate_id: str
+    total: int
+    books: list[BookRecommendation]
+

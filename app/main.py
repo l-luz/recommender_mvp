@@ -35,6 +35,11 @@ def startup_event():
 
 # ==================== ROTAS ====================
 
+# Incluir routers
+app.include_router(routes_feedback.router)
+app.include_router(routes_users.router)
+app.include_router(routes_slate.router)
+
 @app.get("/")
 def read_root():
     """Root endpoint"""
@@ -43,41 +48,6 @@ def read_root():
         "docs": "/docs",
         "openapi": "/openapi.json"
     }
-
-
-@app.post("/slate")
-def get_slate(user_id: int, n_items: int = 4, db: Session = Depends(get_db)):
-    """Retorna recomendações (slate) para um usuário"""
-    # TODO: Chamar routes_slate.get_slate
-    return {"user_id": user_id, "recommendations": []}
-
-
-@app.post("/feedback")
-def register_feedback(feedback: dict, db: Session = Depends(get_db)):
-    """Registra feedback (like/dislike)"""
-    # TODO: Chamar routes_feedback.register_feedback
-    return {"status": "ok"}
-
-
-@app.post("/login")
-def login(credentials: dict, db: Session = Depends(get_db)):
-    """Autentica usuário"""
-    # TODO: Chamar routes_users.login
-    return {"user_id": 1, "token": "token"}
-
-
-@app.get("/profile/{user_id}")
-def get_profile(user_id: int, db: Session = Depends(get_db)):
-    """Retorna perfil do usuário"""
-    # TODO: Chamar routes_users.get_profile
-    return {"user_id": user_id, "preferences": {}}
-
-
-@app.put("/profile/{user_id}")
-def update_profile(user_id: int, profile: dict, db: Session = Depends(get_db)):
-    """Atualiza perfil do usuário"""
-    # TODO: Chamar routes_users.update_profile
-    return {"status": "ok"}
 
 
 if __name__ == "__main__":
