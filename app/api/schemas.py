@@ -4,7 +4,7 @@ Pydantic schemas for API request/response validation
 
 from pydantic import BaseModel, Field, HttpUrl
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -122,8 +122,7 @@ class UserBase(BaseModel):
 
     id: int
     username: str
-    preferred_genres: Optional[str] = None
-    created_at: datetime
+    preferred_genres: Optional[List[str]] = None
 
 
 #
@@ -132,7 +131,7 @@ class UserBase(BaseModel):
 
 
 class BookRecommendation(BaseModel):
-    """Recommended book info"""
+    """Return model for book recommendation"""
 
     book_id: int
     title: str
@@ -154,4 +153,15 @@ class SlateResponse(BaseModel):
     slate_id: str
     total: int
     books: list[BookRecommendation]
+
+# Genres Schemas
+# class Genre(BaseModel):
+#     """Single genre item"""
+#     genre_id: int
+#     name: str
+
+class GenresList(BaseModel):
+    """Response for list of genres"""
+
+    genres: list[str]
 

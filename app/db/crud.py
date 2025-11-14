@@ -42,13 +42,38 @@ def update_user_genres(db: Session, user_id: int, genres: str) -> models.User:
 
 
 #
+#  CATEGORY
+#
+def get_or_create_category(db: Session, name: str) -> models.Category:
+    """Get existing category by name, or create it if it doesn't exist"""
+    category = db.query(models.Category).filter(models.Category.name == name).first()
+    if not category:
+        category = models.Category(name=name)
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+    return category
+
+
+def get_category(db: Session, category_id: int) -> Optional[models.Category]:
+    """Retrieve category by ID"""
+    return db.query(models.Category).filter(models.Category.id == category_id).first()
+
+
+def get_all_categories(db: Session, skip: int = 0, limit: int = 100) -> List[models.Category]:
+    """List all categories"""
+    return db.query(models.Category).offset(skip).limit(limit).all()
+
+
+#
 #  BOOK
 #
 def create_book(
     db: Session,
     title: str,
     authors: Optional[str] = None,
-    categories: Optional[str] = None,
+    categories_raw: Optional[str] = None,
+    category_names: Optional[List[str]] = None,
     description: Optional[str] = None,
     image: Optional[str] = None,
     info_link: Optional[str] = None,
@@ -58,11 +83,31 @@ def create_book(
     avg_rating: float = 0.0,
     price: Optional[float] = None,
 ) -> models.Book:
-    """Create new book"""
+    """
+    Create new book with many-to-many category relationship
+    
+    Args:
+        db: Database session
+        title: Book title
+        authors: Comma-separated author names
+        categories_raw: Original categories string from CSV
+        category_names: List of category names to associate with this book
+        description: Book description
+        image: Image URL
+        info_link: Info link URL
+        publisher: Publisher name
+        published_date: Publication date
+        ratings_count: Number of ratings
+        avg_rating: Average rating score
+        price: Book price
+    
+    Returns:
+        Created Book instance with associated categories
+    """
     book = models.Book(
         title=title,
         authors=authors,
-        categories=categories,
+        categories_raw=categories_raw,
         description=description,
         image=image,
         info_link=info_link,
@@ -72,6 +117,13 @@ def create_book(
         avg_rating=avg_rating,
         price=price,
     )
+    
+    # Add categories if provided
+    if category_names:
+        for category_name in category_names:
+            category = get_or_create_category(db, category_name.strip())
+            book.categories_rel.append(category)
+    
     db.add(book)
     db.commit()
     db.refresh(book)

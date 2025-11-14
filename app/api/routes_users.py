@@ -113,11 +113,14 @@ def get_profile(user_id: int, db: Session = Depends(database.get_db)) -> dict:
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
+    genres_list = []
+    if user.preferred_genres: # type: ignore
+        genres_list = user.preferred_genres.split(",")
+
     return {
         "id": user.id,
         "username": user.username,
-        "preferred_genres": user.preferred_genres,
-        "created_at": user.created_at,
+        "preferred_genres": genres_list,
     }
 
 
@@ -141,10 +144,11 @@ def update_profile(
     user = crud.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-
+    print("entrou")
+    print(profile_data)
     try:
         if profile_data.preferred_genres:
-            crud.update_user_genres(db, user_id, profile_data.preferred_genres)
+            crud.update_user_genres(db, user_id, ','.join(profile_data.preferred_genres))
 
         return schemas.FeedbackResponse(
             success=True,
@@ -155,4 +159,27 @@ def update_profile(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error updating profile: {str(e)}"
+        )
+
+# TODO: switch to another route
+@router.get("/genres", response_model=schemas.GenresList)
+def get_genre_options(
+    db: Session = Depends(database.get_db),
+) -> schemas.GenresList:
+    """Returns available genres options
+    Args:
+        db: Database session
+    Returns:
+        List of genres    
+    """
+    genres = crud.get_all_categories(db)
+    genre_strings: list[str] = [genre.name for genre in genres] # type: ignore
+
+    try:
+        return schemas.GenresList(
+            genres=genre_strings
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving genres: {str(e)}"
         )

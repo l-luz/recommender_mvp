@@ -19,43 +19,13 @@ router = APIRouter(prefix="/slate", tags=["slate"])
 
 
 #
-# Schemas
-#
-
-
-class SlateRequest(BaseModel):
-    """Request form for getting recommendations"""
-
-    user_id: int
-    n_items: int = 4
-
-
-class BookRecommendation(BaseModel):
-    """Return model for book recommendation"""
-
-    book_id: int
-    title: str
-    authors: str
-    avg_rating: float
-
-
-class SlateResponse(BaseModel):
-    """Response form for recommendations"""
-
-    user_id: int
-    slate_id: str
-    total: int
-    books: List[BookRecommendation]
-
-
-#
 # Endpoints
 #
 
 
-@router.post("/recommend", response_model=SlateResponse)
+@router.post("/recommend", response_model=schemas.SlateResponse)
 def get_recommendations(
-    request: SlateRequest, db: Session = Depends(database.get_db)
+    request: schemas.SlateRequest, db: Session = Depends(database.get_db)
 ) -> dict:
     """
     Returns a slate (list) of recommendations for a user.
@@ -107,3 +77,4 @@ def get_recommendations(
         raise HTTPException(
             status_code=500, detail=f"Error generating recommendations: {str(e)}"
         )
+
