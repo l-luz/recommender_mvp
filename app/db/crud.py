@@ -151,6 +151,8 @@ def _reward_from_action(action_type: models.ActionType) -> float:
     """
     if action_type == models.ActionType.LIKE:
         return 1.0
+    if action_type == models.ActionType.CLEAR:
+        return 0.3
     return 0.0
 
 

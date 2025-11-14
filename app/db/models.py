@@ -90,6 +90,7 @@ class ActionType(str, enum.Enum):
 
     LIKE = "like"  # positive feedback
     DISLIKE = "dislike"  # negative feedback
+    CLEAR  = "clear"  # feedback removed
     # CLICK = "click"  # explicit feedback
     # What is the relevance? user clicked to see more but did not like or dislike... Or he can also give like/dislike after click
 
@@ -104,8 +105,8 @@ class Event(Base):
     book_id = Column(Integer, ForeignKey("books.id"))
     slate_id = Column(String, index=True, nullable=False)  # Recommendation list ID
     pos = Column(Integer, nullable=False)  # 1..K
-    action_type = Column(Enum(ActionType))
-    reward = Column(Float, default=0.0)  # 0 | 0.5 | 1 dislike|click|like
+    action_type = Column(Enum(ActionType)) 
+    reward = Column(Float, default=0.0)  # 0 | 1 dislike | like
     reward_w = Column(Float, default=0.0)  # weight-adjusted reward
     ctx_features = Column(String, nullable=True)  # JSON
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)

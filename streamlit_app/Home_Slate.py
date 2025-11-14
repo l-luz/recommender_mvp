@@ -47,9 +47,8 @@ def main():
     st.subheader("Suas recomendações de hoje:")
     
     try:
-        # TODO: Fazer request para /slate
         response = requests.post(
-             f"{API_URL}/slate",
+             f"{API_URL}/slate/recommend/",
             params={"user_id": user_id, "n_items": 4}
         )
         recommendations = response.json().get("recommendations", [])
@@ -75,21 +74,44 @@ def main():
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button(f"👍 Like", key=f"like_{idx}"):
-                        # TODO: Enviar feedback
-                        st.success("Adicionado aos seus likes!")
+                        try:
+                            response = requests.post(
+                                f"{API_URL}/feedback/",
+                                json={
+                                    "user_id": user_id,
+                                    "book_id": book.get("book_id"),
+                                    "action": "like"
+                                }
+                            )
+                            if response.status_code == 200:
+                                st.success("Adicionado aos seus likes!")
+                        except Exception as e:
+                            st.error(f"Erro ao enviar feedback: {e}")
                 
                 with col2:
                     if st.button(f"👎 Dislike", key=f"dislike_{idx}"):
-                        # TODO: Enviar feedback
-                        st.info("Ok, não recomendaremos similar a este")
+                        try:
+                            response = requests.post(
+                                f"{API_URL}/feedback/",
+                                json={
+                                    "user_id": user_id,
+                                    "book_id": book.get("book_id"),
+                                    "action": "dislike"
+                                }
+                            )
+                            if response.status_code == 200:
+                                st.success("Adicionado aos seus dislikes!")
+                                st.info("Ok, não recomendaremos similar a este")
+                        except Exception as e:
+                            st.error(f"Erro ao enviar feedback: {e}")
     else:
         st.info("📭 Nenhuma recomendação disponível no momento")
     
     # Sidebar com opções
-    with st.sidebar:
-        st.subheader("Opções")
-        if st.button("🔄 Atualizar recomendações"):
-            st.rerun()
+    # with st.sidebar:
+        # st.subheader("Opções")
+    if st.button("🔄 Atualizar recomendações"):
+        st.rerun()
 
 
 if __name__ == "__main__":

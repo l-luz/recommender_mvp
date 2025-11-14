@@ -18,6 +18,7 @@ class ActionType(str, Enum):
 
     LIKE = "like"
     DISLIKE = "dislike"
+    CLEAR = "clear"
 
 
 #

@@ -4,6 +4,7 @@ Streamlit App - Página de Likes
 
 import streamlit as st
 import requests
+from streamlit_app.config import API_URL
 
 st.set_page_config(page_title="Meus Likes", layout="wide")
 
@@ -23,8 +24,11 @@ def main():
     st.write(f"Aqui estão os livros que você curtiu:")
     
     try:
-        # TODO: Fazer request para /events?user_id=X&event_type=like
-        likes = []  # response.json().get("events", [])
+        response = requests.get(
+            f"{API_URL}/feedback/user/{user_id}/likes",
+            params={"user_id": user_id}
+        )
+        likes = response.json().get("books", [])
         
         if likes:
             for like in likes:
@@ -33,7 +37,20 @@ def main():
                     st.write(f"📖 **{like.get('title', 'N/A')}** - {like.get('author', 'N/A')}")
                 with col2:
                     if st.button("Remover", key=f"remove_{like.get('id')}"):
-                        # TODO: Remover like
+                        try:
+                            dislike_response = requests.post(
+                                f"{API_URL}/feedback/register",
+                                json={
+                                    "user_id": user_id,
+                                    "book_id": like.get("id"),
+                                    "action": "clear"
+                                }
+                            )
+                            if dislike_response.status_code == 200:
+                                st.success("Livro removido dos seus likes!")
+                        except Exception as e:
+                            st.error(f"Erro ao remover like: {e}")
+                            
                         st.rerun()
         else:
             st.info("📭 Você ainda não curtiu nenhum livro")

@@ -25,11 +25,10 @@ def main():
     
     try:
         response = requests.get(
-             f"{API_URL}/events",
-            json={"user_id": user_id, "event_type": "dislike"}
+            f"{API_URL}/feedback/user/{user_id}/dislikes",
+            params={"user_id": user_id}
         )
-
-        dislikes = []  # response.json().get("events", [])
+        dislikes = response.json().get("events", [])
         
         if dislikes:
             for dislike in dislikes:
@@ -38,7 +37,19 @@ def main():
                     st.write(f"📖 **{dislike.get('title', 'N/A')}** - {dislike.get('author', 'N/A')}")
                 with col2:
                     if st.button("Remover", key=f"remove_{dislike.get('id')}"):
-                        # TODO: Remover dislike
+                        try:
+                            like_response = requests.post(
+                                f"{API_URL}/feedback/register",
+                                json={
+                                    "user_id": user_id,
+                                    "book_id": dislike.get("id"),
+                                    "action": "clear"
+                                }
+                            )
+                            if like_response.status_code == 200:
+                                st.success("Livro removido dos seus dislikes!")
+                        except Exception as e:
+                            st.error(f"Erro ao remover dislike: {e}")
                         st.rerun()
         else:
             st.info("✅ Você não marcou nenhum livro como dislike ainda")
