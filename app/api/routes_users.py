@@ -144,8 +144,7 @@ def update_profile(
     user = crud.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    print("entrou")
-    print(profile_data)
+
     try:
         if profile_data.preferred_genres:
             crud.update_user_genres(db, user_id, ','.join(profile_data.preferred_genres))

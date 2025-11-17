@@ -19,6 +19,7 @@ class ActionType(str, Enum):
     LIKE = "like"
     DISLIKE = "dislike"
     CLEAR = "clear"
+    IGNORED = "ignored"
 
 
 #
@@ -137,7 +138,10 @@ class BookRecommendation(BaseModel):
     book_id: int
     title: str
     authors: Optional[str] = None
-    avg_rating: Optional[float] = None
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    score: Optional[float] = None
+    image: Optional[str] = None
 
 
 class SlateRequest(BaseModel):
@@ -153,7 +157,7 @@ class SlateResponse(BaseModel):
     user_id: int
     slate_id: str
     total: int
-    books: list[BookRecommendation]
+    recommendations: list[BookRecommendation]
 
 # Genres Schemas
 # class Genre(BaseModel):

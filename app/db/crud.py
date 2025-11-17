@@ -255,6 +255,21 @@ def get_user_disliked_books(db: Session, user_id: int) -> List[models.Book]:
 
     return books
 
+def get_user_last_book_event(
+    db: Session,
+    user_id: int,
+    book_id: int
+) -> Optional[models.Event]:
+    """Get the most recent event for a user and book"""
+    return (
+        db.query(models.Event)
+        .filter(
+            models.Event.user_id == user_id,
+            models.Event.book_id == book_id
+        )
+        .order_by(models.Event.timestamp.desc())
+        .first()
+    )
 
 # def get_user_liked_books_with_events(
 #     db: Session,

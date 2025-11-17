@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.db import crud, models, database
 from app.db.models import ActionType
 from app.api import schemas
+from app.core.rl_runtime import trainer
+from app.core.context_features import ContextFeatures
 
 
 #
@@ -27,6 +29,8 @@ def _feedback_type_to_action_type(action_type: schemas.ActionType) -> ActionType
     mapping = {
         schemas.ActionType.LIKE: ActionType.LIKE,
         schemas.ActionType.DISLIKE: ActionType.DISLIKE,
+        schemas.ActionType.CLEAR: ActionType.CLEAR,
+        schemas.ActionType.IGNORED: ActionType.IGNORED,
     }
     return mapping[action_type]
 
@@ -35,6 +39,8 @@ def _calculate_reward(action_type: schemas.ActionType) -> float:
     """Calculate reward based on feedback type"""
     rewards = {
         schemas.ActionType.LIKE: 1.0,
+        schemas.ActionType.CLEAR: 0.5,
+        schemas.ActionType.IGNORED: 0.3,
         schemas.ActionType.DISLIKE: 0.0,
     }
     return rewards[action_type]
@@ -67,12 +73,6 @@ def register_feedback(
     if not user:
         raise HTTPException(
             status_code=404, detail=f"User {feedback.user_id} not found"
-        )
-
-    book = crud.get_book(db, feedback.book_id)
-    if not book:
-        raise HTTPException(
-            status_code=404, detail=f"Book {feedback.book_id} not found"
         )
 
     # Convert feedback type
@@ -211,3 +211,4 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
         "dislikes": dislikes_count,
         "unique_books_interacted": len(set(e.book_id for e in all_events)),  # type: ignore
     }
+
