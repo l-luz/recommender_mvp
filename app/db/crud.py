@@ -4,7 +4,8 @@ CRUD (Create, Read, Update, Delete) operations in the database
 
 import json
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Tuple
+from sqlalchemy.orm import load_only, desc, func
 
 from . import models
 
@@ -60,10 +61,77 @@ def get_category(db: Session, category_id: int) -> Optional[models.Category]:
     return db.query(models.Category).filter(models.Category.id == category_id).first()
 
 
-def get_all_categories(db: Session, skip: int = 0, limit: int = 100) -> List[models.Category]:
+def get_all_categories(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[models.Category]:
     """List all categories"""
     return db.query(models.Category).offset(skip).limit(limit).all()
 
+
+def get_distinct_categories(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[models.Category]:
+    """List distinct categories"""
+    return db.query(models.Category).offset(skip).limit(limit).distinct().all()
+
+
+def get_categories_frequency(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[Tuple[models.Category, int]]:
+    """List categories frequency"""
+    return db.query(
+            models.Category,
+            func.count(models.book_categories.c.book_id).label('total_books')
+        )\
+        .join(models.book_categories)\
+        .group_by(models.Category)\
+        .order_by(desc('total_books'))\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
+#
+# AUTHOR
+#
+def get_all_authors(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[models.Author]:
+    """List all authors"""
+    return db.query(models.Author).offset(skip).limit(limit).all()
+
+def get_author_books_ids(
+    db: Session, author_id: int, skip: int = 0, limit: int = 100
+) -> List[int]:
+    """List all authors"""
+    return db.query(models.book_authors).filter(models.book_authors.c.author_id == author_id).offset(skip).limit(limit).all()
+
+
+def get_or_create_author(db: Session, name: str) -> models.Author:
+    """Get existing author by name, or create it if it does't exist"""
+    author = db.query(models.Author).filter(models.Author.name == name).first()
+    if not author:
+        author = models.Author(name=name)
+        db.add(author)
+        db.commit()
+        db.refresh(author)
+    return author
+
+
+
+def get_authors_frequency(
+    db: Session, skip: int = 0, limit: int = 100
+) -> List[Tuple[models.Author, int]]:
+    """List authors frequency"""
+    return db.query(
+            models.Author,
+            func.count(models.book_authors.c.book_id).label('total_books')
+        )\
+        .join(models.book_authors)\
+        .group_by(models.Author)\
+        .order_by(desc('total_books'))\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 #
 #  BOOK
@@ -71,9 +139,8 @@ def get_all_categories(db: Session, skip: int = 0, limit: int = 100) -> List[mod
 def create_book(
     db: Session,
     title: str,
-    authors: Optional[str] = None,
-    categories_raw: Optional[str] = None,
-    category_names: Optional[List[str]] = None,
+    authors: Optional[List[str]] = None,
+    categories: Optional[List[str]] = None,
     description: Optional[str] = None,
     image: Optional[str] = None,
     info_link: Optional[str] = None,
@@ -85,12 +152,12 @@ def create_book(
 ) -> models.Book:
     """
     Create new book with many-to-many category relationship
-    
+
     Args:
         db: Database session
         title: Book title
         authors: Comma-separated author names
-        categories_raw: Original categories string from CSV
+        categories: Original categories string from CSV
         category_names: List of category names to associate with this book
         description: Book description
         image: Image URL
@@ -100,14 +167,14 @@ def create_book(
         ratings_count: Number of ratings
         avg_rating: Average rating score
         price: Book price
-    
+
     Returns:
         Created Book instance with associated categories
     """
     book = models.Book(
         title=title,
-        authors=authors,
-        categories_raw=categories_raw,
+        authors=str(authors),
+        categories=str(categories),
         description=description,
         image=image,
         info_link=info_link,
@@ -117,13 +184,18 @@ def create_book(
         avg_rating=avg_rating,
         price=price,
     )
-    
+
     # Add categories if provided
-    if category_names:
-        for category_name in category_names:
+    if categories:
+        for category_name in categories:
             category = get_or_create_category(db, category_name.strip())
             book.categories_rel.append(category)
-    
+
+    if authors:
+        for author_name in authors:
+            author = get_or_create_author(db, author_name.strip())
+            book.authors_rel.append(author)
+
     db.add(book)
     db.commit()
     db.refresh(book)
@@ -138,6 +210,22 @@ def get_book(db: Session, book_id: int) -> Optional[models.Book]:
 def get_all_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]:
     """List all books"""
     return db.query(models.Book).offset(skip).limit(limit).all()
+
+
+def get_all_book_ids(db: Session, skip: int = 0, limit: int = 100) -> List[int]:
+    books = (
+        db.query(models.Book)
+        .options(load_only(models.Book.id))  # type: ignore
+        .order_by(models.Book.id)
+        .all()
+    )
+    return [b.id for b in books]  # type: ignore
+
+def get_book_authors_ids(
+    db: Session, book_id: int, skip: int = 0, limit: int = 100
+) -> List[int]:
+    """List all authors"""
+    return db.query(models.book_authors).filter(models.book_authors.c.book_id == book_id).offset(skip).limit(limit).all()
 
 
 #
@@ -255,36 +343,37 @@ def get_user_disliked_books(db: Session, user_id: int) -> List[models.Book]:
 
     return books
 
+
+# TODO: limit = 1
 def get_user_last_book_event(
-    db: Session,
-    user_id: int,
-    book_id: int
+    db: Session, user_id: int, book_id: int
 ) -> Optional[models.Event]:
     """Get the most recent event for a user and book"""
     return (
         db.query(models.Event)
-        .filter(
-            models.Event.user_id == user_id,
-            models.Event.book_id == book_id
-        )
+        .filter(models.Event.user_id == user_id, models.Event.book_id == book_id)
         .order_by(models.Event.timestamp.desc())
         .first()
     )
 
-# def get_user_liked_books_with_events(
-#     db: Session,
-#     user_id: int
-# ) -> List[tuple]:
-#     """List all books liked by a user with their event data (book, event)"""
-#     liked_events = db.query(models.Event).filter(
-#         models.Event.user_id == user_id,
-#         models.Event.action_type == models.ActionType.LIKE
-#     ).all()
 
-#     books_with_events = []
-#     for event in liked_events:
-#         book = get_book(db, event.book_id)
-#         if book:
-#             books_with_events.append((book, event))
-
-#     return books_with_events
+def get_user_latest_interactions(db: Session, user_id: int, limit: int = 100, skip: int = 0):
+    """Get user la"""
+    return (
+        db.query(models.Event)
+        .filter(models.Event.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+        .filter(
+            models.Event.action_type.in_(
+                [
+                    models.ActionType.LIKE,
+                    models.ActionType.DISLIKE,
+                    models.ActionType.IGNORED,
+                    models.ActionType.CLEAR,
+                ]
+            )
+        )
+        .order_by(models.Event.created_at.desc())
+        .all()
+    )

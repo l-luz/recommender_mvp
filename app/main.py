@@ -6,7 +6,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .db.database import init_db, get_db
+from .db.database import init_db
 from .utils.config import FASTAPI_CONFIG
 from .api import routes_slate, routes_feedback, routes_users
 

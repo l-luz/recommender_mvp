@@ -20,12 +20,20 @@ import ast
 from .database import Base
 from typing import List, Optional
 
-# Association table for many-to-many relationship between Book and Category
+
+# Association table for many-to-many relationships
 book_categories = Table(
     "book_categories",
     Base.metadata,
     Column("book_id", Integer, ForeignKey("books.id"), primary_key=True),
     Column("category_id", Integer, ForeignKey("categories.id"), primary_key=True),
+)
+
+book_authors = Table(
+    "book_authors",
+    Base.metadata,
+    Column("book_id", Integer, ForeignKey("books.id"), primary_key=True),
+    Column("author_id", Integer, ForeignKey("authors.id"), primary_key=True),
 )
 
 
@@ -43,6 +51,18 @@ class Category(Base):
     )
 
 
+class Author(Base):
+    """Book authors table"""
+
+    __tablename__ = "authors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+
+    # Relationship to books (many-to-many)
+    books = relationship("Book", secondary=book_authors, back_populates="authors_rel")
+
+
 class User(Base):
     """User table"""
 
@@ -57,6 +77,31 @@ class User(Base):
     # Relationship
     events = relationship("Event", back_populates="user", cascade="all, delete-orphan")
 
+    @property
+    def get_genre_list(self):
+        return self._get_list_field("preferred_genres")
+
+    # TODO: global?
+    def _get_list_field(self, column_name: str) -> List[str]:
+        """
+        Returns the field value as a list.
+        If it is None, an empty string, or a list string, returns an empty list.
+        """
+        value = getattr(self, column_name, None)
+        if not value:
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = ast.literal_eval(value)
+                if isinstance(parsed, list):
+                    return parsed
+                return []
+            except Exception:
+                return []
+        return []
+
 
 class Book(Base):
     """Book table"""
@@ -66,7 +111,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, index=True)
     authors = Column(Text, nullable=True)  # Comma-separated
-    categories_raw = Column(Text, nullable=True)  # Original CSV categories as string
+    categories = Column(Text, nullable=True)  # Original CSV categories as string
     description = Column(Text, nullable=True)
     image = Column(Text, nullable=True)
     info_link = Column(Text, nullable=True)
@@ -76,12 +121,14 @@ class Book(Base):
     avg_rating = Column(Float, default=0.0)
     price = Column(Float, nullable=True)
 
-    # Relationship to categories (many-to-many)
+    # Many-to-many relationship
     categories_rel = relationship(
         "Category", secondary=book_categories, back_populates="books"
     )
 
-    # Relationship to events
+    authors_rel = relationship("Author", secondary=book_authors, back_populates="books")
+
+    # One to Many relationship
     events = relationship("Event", back_populates="book", cascade="all, delete-orphan")
 
     @property
@@ -92,7 +139,15 @@ class Book(Base):
         value = getattr(self, "image", None)
         return value if value and value != "None" else None
 
-    def get_list_fiel(self, column_name: str) -> List[str]:
+    @property
+    def get_categories_list(self) -> List[str]:
+        return self._get_list_field("categories")
+
+    @property
+    def get_authors_list(self) -> List[str]:
+        return self._get_list_field("authors")
+
+    def _get_list_field(self, column_name: str) -> List[str]:
         """
         Returns the field value as a list.
         If it is None, an empty string, or a list string, returns an empty list.
@@ -118,7 +173,9 @@ class ActionType(str, enum.Enum):
 
     LIKE = "like"  # positive feedback
     DISLIKE = "dislike"  # negative feedback
-    CLEAR  = "clear"  # feedback removed
+
+    # Remove to simplify operations
+    CLEAR = "clear"  # feedback removed
     IGNORED = "ignored"  # slate updated without user action
     # CLICK = "click"  # explicit feedback
     # What is the relevance? user clicked to see more but did not like or dislike... Or he can also give like/dislike after click
@@ -134,7 +191,7 @@ class Event(Base):
     book_id = Column(Integer, ForeignKey("books.id"))
     slate_id = Column(String, index=True, nullable=False)  # Recommendation list ID
     pos = Column(Integer, nullable=False)  # 1..K
-    action_type = Column(Enum(ActionType)) 
+    action_type = Column(Enum(ActionType))
     reward = Column(Float, default=0.0)  # 0 | 1 dislike | like
     reward_w = Column(Float, default=0.0)  # weight-adjusted reward
     ctx_features = Column(String, nullable=True)  # JSON
