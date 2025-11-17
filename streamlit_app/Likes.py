@@ -15,7 +15,7 @@ def main():
     st.title("❤️ Meus Likes")
     
     # Verificar login
-    if "user_id" not in st.session_state:
+    if "user_id" not in st.session_state or st.session_state.user_id is None:
         st.warning("⚠️ Faça login para ver seus likes")
         st.stop()
     
@@ -51,7 +51,7 @@ def main():
                         except Exception as e:
                             st.error(f"Erro ao remover like: {e}")
                             
-                        st.rerun()
+                        # st.rerun()
         else:
             st.info("📭 Você ainda não curtiu nenhum livro")
     

@@ -16,7 +16,7 @@ def main():
     st.title("👎 Meus Dislikes")
     
     # Verificar login
-    if "user_id" not in st.session_state:
+    if "user_id" not in st.session_state or st.session_state.user_id is None:
         st.warning("⚠️ Faça login para ver seus dislikes")
         st.stop()    
     user_id = st.session_state.user_id
@@ -50,7 +50,7 @@ def main():
                                 st.success("Livro removido dos seus dislikes!")
                         except Exception as e:
                             st.error(f"Erro ao remover dislike: {e}")
-                        st.rerun()
+                        # st.rerun()
         else:
             st.info("✅ Você não marcou nenhum livro como dislike ainda")
     

@@ -14,7 +14,6 @@ st.set_page_config(
     page_title="Recommender MVP",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 # Inicializar session state

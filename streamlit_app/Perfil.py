@@ -14,7 +14,7 @@ def main():
     st.title("👤 Meu Perfil")
     
     # Verificar login
-    if "user_id" not in st.session_state:
+    if "user_id" not in st.session_state or st.session_state.user_id is None:
         st.warning("⚠️ Faça login para acessar seu perfil")
         st.stop()
     
