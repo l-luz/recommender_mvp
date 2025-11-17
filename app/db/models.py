@@ -16,9 +16,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-
+import ast
 from .database import Base
-
+from typing import List, Optional
 
 # Association table for many-to-many relationship between Book and Category
 book_categories = Table(
@@ -84,6 +84,34 @@ class Book(Base):
     # Relationship to events
     events = relationship("Event", back_populates="book", cascade="all, delete-orphan")
 
+    @property
+    def get_image(self) -> Optional[str]:
+        """
+        Returns the image URL or None if not available.
+        """
+        value = getattr(self, "image", None)
+        return value if value and value != "None" else None
+
+    def get_list_fiel(self, column_name: str) -> List[str]:
+        """
+        Returns the field value as a list.
+        If it is None, an empty string, or a list string, returns an empty list.
+        """
+        value = getattr(self, column_name, None)
+        if not value:
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = ast.literal_eval(value)
+                if isinstance(parsed, list):
+                    return parsed
+                return []
+            except Exception:
+                return []
+        return []
+
 
 class ActionType(str, enum.Enum):
     """Types of events"""
@@ -91,6 +119,7 @@ class ActionType(str, enum.Enum):
     LIKE = "like"  # positive feedback
     DISLIKE = "dislike"  # negative feedback
     CLEAR  = "clear"  # feedback removed
+    IGNORED = "ignored"  # slate updated without user action
     # CLICK = "click"  # explicit feedback
     # What is the relevance? user clicked to see more but did not like or dislike... Or he can also give like/dislike after click
 
