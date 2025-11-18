@@ -3,9 +3,9 @@ CRUD (Create, Read, Update, Delete) operations in the database
 """
 
 import json
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import load_only, desc, func
+from sqlalchemy import desc, func
 
 from . import models
 

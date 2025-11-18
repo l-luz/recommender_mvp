@@ -1,11 +1,5 @@
 ## 📋 Resumo do Projeto
 
-Projeto **completo** de recomendação de livros com aprendizado por reforço contextual criado conforme as instruções.
-
----
-
-## 🗂️ Estrutura Criada
-
 ### Backend (FastAPI) - `app/`
 ```
 app/
@@ -13,18 +7,21 @@ app/
 ├── api/
 │   ├── routes_slate.py       # GET /slate (recomendações)
 │   ├── routes_feedback.py    # POST /feedback (like/dislike)
-│   └── routes_users.py       # POST /login, GET/PUT /profile
+│   ├── routes_users.py       # POST /login, GET/PUT /profile
+│   └── schemas.py            # API request/response validation
 ├── core/
-│   ├── recommender.py        # ContextualRecommender (mabwiser)
+│   ├── recommender/ 
+│   │   ├── base.py           # BaseRecommender (Interface)
+│   │   └── linucb.py         # LinUCBRecommender (Linucb)
 │   ├── training.py           # OnlineTrainer (mini-batch)
 │   └── context_features.py   # Extrator de features (user+item)
 ├── db/
 │   ├── database.py           # SQLite + SessionLocal
-│   ├── models.py             # Tabelas (User, Book, Event, Review)
+│   ├── models.py             # Tabelas (User, Book, Event, Category, Author, etc)
 │   └── crud.py               # Operações CRUD
 └── utils/
     ├── config.py             # Configurações globais
-    ├── logger.py             # Logging de eventos
+    ├── logger.py             # Logging de eventos # TODO: verify
     └── seeds.py              # Gerador de dados teste
 ```
 
@@ -32,36 +29,41 @@ app/
 ```
 streamlit_app/
 ├── __init__.py               # Inicialização
+├── config.py                 # Configurações globais
 ├── Login.py                  # Autenticação
 ├── Home_Slate.py            # Recomendações
 ├── Likes.py                 # Histórico de likes
 ├── Dislikes.py              # Histórico de dislikes
 ├── Perfil.py                # Preferências do usuário
-├── Logout.py                # Desconexão
 └── components/
     ├── book_card.py         # Renderização de livros
-    └── navigation.py        # Menu compartilhado
+    └── navigation.py        # Menu compartilhado # TODO: use?
 ```
-
-### Testes - `tests/`
+# TODO: review in the end
+<!-- ### Testes - `tests/`
 ```
 tests/
 ├── test_api.py              # Testes das rotas FastAPI
 ├── test_recommender.py      # Testes do modelo (mabwiser)
 ├── test_db.py               # Testes CRUD + DB
 └── conftest.py              # Fixtures pytest
-```
+``` -->
 
 ### Dados e Análise - `data/` e `notebooks/`
 ```
 data/
 ├── raw/                      # CSVs originais
+│   ├── books_data.csv        
+│   └── books_rating.csv
 ├── processed/                # Dados limpos
+│   └── books_cleaned.csv
+│   └── rating_cleaned.csv
 └── embeddings/               # TF-IDF / Sentence-Transformers
 
 notebooks/
-├── offline_eval.ipynb       # CTR, Regret, Diversidade
-└── exploration_tests.ipynb  # Testes de exploração
+└── data_extraction.ipynb    # Clean data and populate db
+<!-- ├── offline_eval.ipynb       # CTR, Regret, Diversidade
+└── exploration_tests.ipynb  # Testes de exploração -->
 ```
 
 ---
@@ -76,7 +78,7 @@ notebooks/
 
 ---
 
-## 🚀 Próximos Passos
+## Quickstart
 
 ### 1. Ativar Virtual Environment
 ```powershell
@@ -159,16 +161,4 @@ streamlit run streamlit_app/Login.py
 
 ---
 
-## ✨ Estrutura Pronta para:
-
-✅ Desenvolvimento modular  
-✅ Aprendizado por reforço contextual online  
-✅ Testes automatizados com pytest  
-✅ Análise offline com Jupyter  
-✅ Deploy em produção  
-
----
-
 **Projeto criado em**: 11 de Novembro de 2025  
-**Status**: ✅ Estrutura Completa e Pronta para Desenvolvimento  
-

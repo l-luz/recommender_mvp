@@ -159,11 +159,6 @@ class SlateResponse(BaseModel):
     total: int
     recommendations: list[BookRecommendation]
 
-# Genres Schemas
-# class Genre(BaseModel):
-#     """Single genre item"""
-#     genre_id: int
-#     name: str
 
 class GenresList(BaseModel):
     """Response for list of genres"""

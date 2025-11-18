@@ -1,5 +1,5 @@
 """
-Atualização online do modelo (mini-batch)
+Online model update (mini-batchs)
 """
 
 from typing import List, Tuple
@@ -9,20 +9,20 @@ from .context_features import ContextFeatures
 
 class OnlineTrainer:
     """
-    Gerencia atualização online do modelo com mini-batches.
+    Manages online model updates with mini-batches.
     """
     
     def __init__(self, recommender, batch_size: int = 32):
         """
-        Inicializa trainer.
-        
+        Initialize trainer.
+
         Args:
-            recommender: Instância de ContextualRecommender
-            batch_size: Tamanho do mini-batch para update
+            recommender: ContextualRecommender instance
+            batch_size: Mini-batch size for update
         """
         self.recommender = recommender
         self.batch_size = batch_size
-        self.buffer: List[Tuple] = []  # buffer de (context, arm, reward)
+        self.buffer: List[Tuple] = []  # buffer (context, arm, reward)
     
     def add_feedback(
         self,
@@ -31,22 +31,21 @@ class OnlineTrainer:
         reward: float
     ):
         """
-        Adiciona feedback ao buffer.
-        
+        Adds feedback to the buffer.
+
         Args:
-            context: Vetor de contexto
-            arm: Item selecionado
-            reward: Recompensa
+            context: Context vector
+            arm: Selected item
+            reward: Reward
         """
         self.buffer.append((context, arm, reward))
         
-        # Se atingiu batch_size, fazer update
         if len(self.buffer) >= self.batch_size:
             self.flush()
     
     def flush(self):
         """
-        Processa buffer acumulado e atualiza modelo.
+        Processes accumulated buffer and updates template.
         """
         if not self.buffer:
             return
