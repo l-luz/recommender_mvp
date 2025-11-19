@@ -14,7 +14,7 @@ BOOK_IDS = crud.get_all_book_ids(next(database.get_db()))
 ARM_INDEX = {bid: i for i, bid in enumerate(BOOK_IDS)}
 
 N_ARMS = len(BOOK_IDS)
-FEATURE_DIM = 6  # TODO: !
+FEATURE_DIM = 6  # TODO: test dimensions
 
 # ------------------------------------------------------------
 # Global instance of the RL model

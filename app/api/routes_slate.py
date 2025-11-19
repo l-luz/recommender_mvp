@@ -2,12 +2,14 @@
 Route /slate -> returns book recommendations
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-
+from app.core.rl_runtime import recommender, features, ARM_INDEX
+import numpy as np
 from app.db import crud, database
 from app.api import schemas
+import random
+import uuid
 
 #
 # Router Setup
@@ -46,37 +48,64 @@ def get_recommendations(
         )
 
     try:
-        # Get all available books
-        all_books = crud.get_all_books(db, skip=0, limit=100)
-
-        # Simple recommendation: return random books (TODO: integrate MABWiser)
-        import random
-        import uuid
         slate_id = str(uuid.uuid4())
 
-        recommended_books = random.sample(all_books, min(n_items, len(all_books)))
+
+        # recommended_books= _random_approach(db, user_id, n_items)
+        recommended_books_ids = _rl_approach(db, user_id, n_items)
         recommended_data = []
-        for book in recommended_books:
-            data = {
-                "book_id": book.id,
-                "title": book.title,
-                "description": book.description or "No description available.",
-                "score": book.avg_rating,
-                "image": book.get_image or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
-                }
-            data["authors"] =  ','.join(book.get_list_fiel("authors")) if book.get_list_fiel("authors") else "N/A" # type: ignore
-            data["genre"] = ','.join(book.get_list_fiel("categories_raw")) if book.get_list_fiel("categories_raw") else "N/A"  # type: ignore
-            recommended_data.append(data)
-                        
+        for b_idx in recommended_books_ids:
+            book = crud.get_book(db, b_idx)
+            if book:
+                data = {
+                    "book_id": b_idx,
+                    "title": book.title,
+                    "description": book.description or "No description available.",
+                    "score": book.avg_rating,
+                    "image": book.get_image or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
+                    }
+                data["authors"] =  ','.join(book.get_authors_list) if book.get_authors_list else "N/A" # type: ignore
+                data["genre"] = ','.join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
+                recommended_data.append(data)
+
         return {
             "user_id": user_id,
             "slate_id": slate_id,
-            "total": len(recommended_books),
+            "total": n_items,
             "recommendations": recommended_data,
         }
-
     except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=500, detail=f"Error generating recommendations: {str(e)}"
         )
+
+def _random_approach(db, user_id, n_items):
+    all_books = crud.get_all_books(db, skip=0, limit=100)
+
+    random_books = random.sample(all_books, min(n_items, len(all_books)))
+                    
+    return random_books
+
+def _rl_approach(db, user_id, n_items):
+    all_books = crud.get_all_books(db)
+
+    candidate_books = random.sample(all_books, k=min(len(all_books), 30))
+
+    contexts = []
+    arms = []
+
+    for book in candidate_books:
+        ctx = features.get_context(user_id, book.id, db=db) # type: ignore
+        contexts.append(ctx)
+        arms.append(book.id)
+
+    contexts = np.array(contexts)
+
+    chosen_books_ids = recommender.recommend(
+        candidate_arms=arms,
+        contexts=contexts,
+        n_recommendations=n_items
+    )
+    return chosen_books_ids
 

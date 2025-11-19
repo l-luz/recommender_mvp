@@ -52,6 +52,7 @@ def main():
             f"{API_URL}/slate/recommend", params={"user_id": user_id, "n_items": 4}
         )
         recommendations = response.json().get("recommendations", [])
+        slate_id = response.json().get("slate_id", None)
     except Exception as e:
         st.error(f"Erro ao buscar recomendações: {e}")
         recommendations = []
@@ -61,7 +62,7 @@ def main():
         cols = st.columns(2)
         for idx, book in enumerate(recommendations):
             with cols[idx % 2]:
-                render_book_card(book, idx)
+                render_book_card(book, idx, slate_id)
     else:
         st.info("📭 Nenhuma recomendação disponível no momento")
 

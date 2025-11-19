@@ -1,15 +1,17 @@
 """
 Contextual Bandit Logic (LinUCB)
 """
+
 import numpy as np
 from .base import BaseRecommender
-from typing import List
+from typing import Dict, List
+
 
 class LinUCBRecommender(BaseRecommender):
     """
     Implements the LinUCB (Linear Upper Confidence Bound) algorithm for disjoint linear models.
-    
-    This recommender maintains separate ridge regression estimates for each arm 
+
+    This recommender maintains separate ridge regression estimates for each arm
     to calculate an upper confidence bound for the expected reward.
     """
 
@@ -23,17 +25,23 @@ class LinUCBRecommender(BaseRecommender):
             alpha: Exploration parameter. Higher values increase the confidence bound width,
                    encouraging more exploration of uncertain arms.
         """
-        self.n_arms = n_arms
-        self.d = d # dimension
-        self.alpha = alpha # exploration factor
-        self.A = [np.eye(d) for _ in range(n_arms)] # context covariance
-        self.b = [np.zeros((d, 1)) for _ in range(n_arms)] # context-reward relationship
+        self.d = d  # dimension
+        self.alpha = alpha  # exploration factor
+        # Key: BookID (int), Value: Matrix/Vector
+        self.A: Dict[int, np.ndarray] = {}  # context covariance
+        self.b: Dict[int, np.ndarray] = {}  # context-reward relationship
+
+    def _init_arm(self, arm_id: int):
+        """
+        Lazy initialization: if we haven't seen this book ID before,
+        create its A and b matrices.
+        """
+        if arm_id not in self.A:
+            self.A[arm_id] = np.eye(self.d)
+            self.b[arm_id] = np.zeros((self.d, 1))
 
     def recommend(
-        self,
-        candidate_arms: List[int],
-        contexts: np.ndarray,
-        n_recommendations: int
+        self, candidate_arms: List[int], contexts: np.ndarray, n_recommendations: int
     ) -> List[int]:
         """
         Selects the top-k arms based on their Upper Confidence Bound scores.
@@ -50,19 +58,28 @@ class LinUCBRecommender(BaseRecommender):
         scores = []
 
         for arm, x in zip(candidate_arms, contexts):
+            self._init_arm(arm)
             x = x.reshape(-1, 1)
+
+            # Inversion of A (Ridge Regression covariance)
             A_inv = np.linalg.inv(self.A[arm]) # TODO: if it takes too long, the problem is probably here. Use Sherman-Morrison?
-            theta = A_inv @ self.b[arm]
-            # Calculate UCB score: prediction + exploration_bonus
-            # p = theta^T * x + alpha * sqrt(x^T * A_inv * x)
-            p = (theta.T @ x + self.alpha * np.sqrt(x.T @ A_inv @ x)).item()
+
+            theta = A_inv @ self.b[arm] # Coefficient estimates
+
+            # UCB Score Calculation
+            mean = theta.T @ x # Mean prediction (exploitation)
+            var = np.sqrt(x.T @ A_inv @ x) # Confidence interval (exploration)
+            p = (mean + self.alpha * var).item()
             scores.append(p)
-        
+
         scores = np.array(scores)
-        ranked_idx = scores.argsort()[::-1]
+        ranked_indices = scores.argsort()[::-1]
+
+        # Map back to Book IDs
         K = min(n_recommendations, len(candidate_arms))
-        chosen = [candidate_arms[i] for i in ranked_idx[:K]]
-        return chosen
+        chosen_arms = [candidate_arms[i] for i in ranked_indices[:K]]
+
+        return chosen_arms
 
     def update(self, context, arm, reward):
         """
@@ -76,6 +93,8 @@ class LinUCBRecommender(BaseRecommender):
             arm: The index of the arm that was executed.
             reward: The reward value observing from the environment (e.g., 1.0 for click, 0.0 for ignore).
         """
+        self._init_arm(arm)
+        # TODO: Sherman-Morrison ?
         x = context.reshape(-1, 1)
         self.A[arm] += x @ x.T
         self.b[arm] += reward * x

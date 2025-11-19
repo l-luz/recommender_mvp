@@ -8,7 +8,7 @@ from streamlit_app.config import API_URL
 import requests
 
 
-def render_book_card(book: Dict, idx: int):
+def render_book_card(book: Dict, idx: int, slate_idx: int):
     """
     Renderiza um card de livro em Streamlit.
 
@@ -49,11 +49,13 @@ def render_book_card(book: Dict, idx: int):
             if st.button(f"👍 Like", key=f"like_{idx}"):
                 try:
                     response = requests.post(
-                        f"{API_URL}/feedback/",
+                        f"{API_URL}/feedback/register",
                         json={
                             "user_id": user_id,
                             "book_id": book.get("book_id"),
-                            "action": "like",
+                            "slate_id": slate_idx,
+                            "action_type": "like",
+                            "pos": idx,
                         },
                     )
                     if response.status_code == 200:
@@ -65,11 +67,13 @@ def render_book_card(book: Dict, idx: int):
             if st.button(f"👎 Dislike", key=f"dislike_{idx}"):
                 try:
                     response = requests.post(
-                        f"{API_URL}/feedback/",
+                        f"{API_URL}/feedback/register",
                         json={
                             "user_id": user_id,
                             "book_id": book.get("book_id"),
-                            "action": "dislike",
+                            "slate_id": slate_idx,
+                            "action_type": "dislike",
+                            "pos": idx,
                         },
                     )
                     if response.status_code == 200:
