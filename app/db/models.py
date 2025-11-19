@@ -21,7 +21,7 @@ from .database import Base
 from typing import List, Optional
 
 
-# Association table for many-to-many relationships
+# Association tables for many-to-many relationships
 book_categories = Table(
     "book_categories",
     Base.metadata,

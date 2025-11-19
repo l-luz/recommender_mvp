@@ -4,7 +4,7 @@ Components - Renderização de card de livro
 
 import streamlit as st
 from typing import Dict
-from streamlit_app.config import API_URL
+from app.utils.config_streamlit import STREAMLIT_CONFIG["api_url"]
 import requests
 
 
@@ -49,7 +49,7 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
             if st.button(f"👍 Like", key=f"like_{idx}"):
                 try:
                     response = requests.post(
-                        f"{API_URL}/feedback/register",
+                        f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                         json={
                             "user_id": user_id,
                             "book_id": book.get("book_id"),
@@ -67,7 +67,7 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
             if st.button(f"👎 Dislike", key=f"dislike_{idx}"):
                 try:
                     response = requests.post(
-                        f"{API_URL}/feedback/register",
+                        f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                         json={
                             "user_id": user_id,
                             "book_id": book.get("book_id"),

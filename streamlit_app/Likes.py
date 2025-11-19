@@ -4,7 +4,7 @@ Streamlit App - Página de Likes
 
 import streamlit as st
 import requests
-from streamlit_app.config import API_URL
+from app.utils.config import STREAMLIT_CONFIG
 
 st.set_page_config(page_title="Meus Likes", layout="wide")
 
@@ -25,7 +25,7 @@ def main():
     
     try:
         response = requests.get(
-            f"{API_URL}/feedback/user/{user_id}/likes",
+            f"{STREAMLIT_CONFIG["api_url"]}/feedback/user/{user_id}/likes",
             params={"user_id": user_id}
         )
         likes = response.json().get("books", [])
@@ -39,7 +39,7 @@ def main():
                     if st.button("Remover", key=f"remove_{like.get('id')}"):
                         try:
                             dislike_response = requests.post(
-                                f"{API_URL}/feedback/register",
+                                f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                                 json={
                                     "user_id": user_id,
                                     "book_id": like.get("id"),

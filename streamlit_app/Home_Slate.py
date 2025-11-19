@@ -5,8 +5,8 @@ Streamlit App - Página principal (Slate de livros)
 import streamlit as st
 import requests
 from typing import List, Dict
+from app.utils.config import STREAMLIT_CONFIG
 from streamlit_app.components.book_card import render_book_card
-from streamlit_app.config import API_URL
 
 # Configurar página
 st.set_page_config(
@@ -49,7 +49,7 @@ def main():
 
     try:
         response = requests.post(
-            f"{API_URL}/slate/recommend", params={"user_id": user_id, "n_items": 4}
+            f"{STREAMLIT_CONFIG["api_url"]}/slate/recommend", params={"user_id": user_id, "n_items": STREAMLIT_CONFIG["max_recommendations"]}
         )
         recommendations = response.json().get("recommendations", [])
         slate_id = response.json().get("slate_id", None)

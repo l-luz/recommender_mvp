@@ -20,8 +20,8 @@ for directory in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, EMBEDDINGS_DIR]:
 # Template settings
 RECOMMENDER_CONFIG = {
     "n_arms": 100,  # Maximum number of books
-    "context_dim": 50,  # Feature dimensionality
-    "model_type": "linucb",  # or "lints"
+    "feature_dim": 6,  # Feature dimensionality
+    "model_type": "linucb",
     "alpha": 1.0,  # LinUCB exploration parameter
     "batch_size": 32,  # Mini-batch actions size for update
 }
@@ -31,6 +31,8 @@ STREAMLIT_CONFIG = {
     "max_recommendations": 4,
     "page_title": "Recommender MVP",
     "layout": "wide",
+    "api_url": "http://127.0.0.1:8000",
+    "api_timeout": 5
 }
 
 # FastAPI Settings

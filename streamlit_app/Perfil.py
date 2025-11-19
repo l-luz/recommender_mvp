@@ -4,7 +4,7 @@ Streamlit App - Página de Perfil
 
 import streamlit as st
 import requests
-from streamlit_app.config import API_URL
+from app.utils.config import STREAMLIT_CONFIG
 st.set_page_config(page_title="Meu Perfil", layout="wide")
 
 
@@ -25,11 +25,11 @@ def main():
     
     try:
         genre_response = requests.get(
-                f"{API_URL}/users/genres",
+                f"{STREAMLIT_CONFIG["api_url"]}/users/genres",
         )
 
         user_response = requests.get(
-                f"{API_URL}/users/profile/{user_id}",
+                f"{STREAMLIT_CONFIG["api_url"]}/users/profile/{user_id}",
             json={
                 "id": user_id 
                 }
@@ -60,7 +60,7 @@ def main():
                 if submitted:
                     try:
                         update_response = requests.put(
-                            f"{API_URL}/users/profile/{user_id}",
+                            f"{STREAMLIT_CONFIG["api_url"]}/users/profile/{user_id}",
                             json={
                                 "id": user_id,
                                 "username": username,

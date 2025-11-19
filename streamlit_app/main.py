@@ -3,8 +3,6 @@ Streamlit App - Página de Login
 """
 
 import streamlit as st
-import requests
-from streamlit_app.config import API_URL
 
 
 

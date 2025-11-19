@@ -10,7 +10,7 @@ from .db.database import init_db
 from .utils.config import FASTAPI_CONFIG
 from .api import routes_slate, routes_feedback, routes_users
 
-# Inicializar FastAPI
+# FastAPI
 app = FastAPI(
     title=FASTAPI_CONFIG["title"],
     version=FASTAPI_CONFIG["version"]
@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializar banco
+# DATABASE
 @app.on_event("startup")
 def startup_event():
     """Cria tabelas no startup"""
@@ -33,9 +33,7 @@ def startup_event():
     print("✓ Database initialized")
 
 
-# ==================== ROTAS ====================
-
-# Incluir routers
+# ==================== ROUTES ====================
 app.include_router(routes_feedback.router)
 app.include_router(routes_users.router)
 app.include_router(routes_slate.router)
