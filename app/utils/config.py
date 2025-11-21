@@ -13,6 +13,7 @@ PROCESSED_DATA_DIR = DATA_DIR / "processed"
 EMBEDDINGS_DIR = DATA_DIR / "embeddings"
 DATABASE_PATH = DATA_DIR / "database.db"
 
+
 # Create directories if they do not exist
 for directory in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, EMBEDDINGS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
@@ -24,6 +25,7 @@ RECOMMENDER_CONFIG = {
     "model_type": "linucb",
     "alpha": 1.0,  # LinUCB exploration parameter
     "batch_size": 32,  # Mini-batch actions size for update
+    "item_config": EMBEDDINGS_DIR / "item_config.json"
 }
 
 # Streamlit Settings
