@@ -4,7 +4,7 @@ Components - Renderização de card de livro
 
 import streamlit as st
 from typing import Dict
-from app.utils.config_streamlit import STREAMLIT_CONFIG["api_url"]
+from app.utils.config import STREAMLIT_CONFIG
 import requests
 
 
@@ -58,8 +58,8 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
                             "pos": idx,
                         },
                     )
-                    if response.status_code == 200:
-                        st.success("Adicionado aos seus likes!")
+                    # if response.status_code == 200:
+                    #     st.success("Adicionado aos seus likes!")
                 except Exception as e:
                     st.error(f"Erro ao enviar feedback: {e}")
 
@@ -76,8 +76,8 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
                             "pos": idx,
                         },
                     )
-                    if response.status_code == 200:
-                        st.success("Adicionado aos seus dislikes!")
-                        st.info("Ok, não recomendaremos similar a este")
+                    # if response.status_code == 200:
+                        # st.success("Adicionado aos seus dislikes!")
+                        # st.info("Ok, não recomendaremos similar a este")
                 except Exception as e:
                     st.error(f"Erro ao enviar feedback: {e}")

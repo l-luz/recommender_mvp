@@ -32,26 +32,31 @@ def main():
         
         if likes:
             for like in likes:
-                col1, col2 = st.columns([4, 1])
+                col1, col2, col3= st.columns([2, 4, 1])
                 with col1:
-                    st.write(f"📖 **{like.get('title', 'N/A')}** - {like.get('author', 'N/A')}")
+                    image = like.get("image", None)
+                    if image and image != "N/A":
+                        st.image(image=image, width=100)
+                    else:
+                        st.write("📖")  # TODO: Use a placeholder
                 with col2:
+                    st.write(f"**{like.get('title', 'N/A')}** - {like.get('authors', 'N/A')}")
+                with col3:
                     if st.button("Remover", key=f"remove_{like.get('id')}"):
                         try:
-                            dislike_response = requests.post(
+                            remove_response = requests.post(
                                 f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                                 json={
                                     "user_id": user_id,
                                     "book_id": like.get("id"),
-                                    "action": "clear"
+                                    "action_type": "clear",
                                 }
                             )
-                            if dislike_response.status_code == 200:
+                            if remove_response.status_code == 200:
                                 st.success("Livro removido dos seus likes!")
                         except Exception as e:
                             st.error(f"Erro ao remover like: {e}")
-                            
-                        # st.rerun()
+                        st.rerun()
         else:
             st.info("📭 Você ainda não curtiu nenhum livro")
     

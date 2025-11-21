@@ -27,29 +27,36 @@ def main():
             f"{STREAMLIT_CONFIG["api_url"]}/feedback/user/{user_id}/dislikes",
             params={"user_id": user_id}
         )
-        dislikes = response.json().get("events", [])
+        dislikes = response.json().get("books", [])
         
         if dislikes:
             for dislike in dislikes:
-                col1, col2 = st.columns([4, 1])
+                col1, col2, col3= st.columns([2, 4, 1])
+    
                 with col1:
-                    st.write(f"📖 **{dislike.get('title', 'N/A')}** - {dislike.get('author', 'N/A')}")
+                    image = dislike.get("image", None)
+                    if image and image != "N/A":
+                        st.image(image=image, width=100)
+                    else:
+                        st.write("📖")  # TODO: Use a placeholder
                 with col2:
+                    st.write(f"📖 **{dislike.get('title', 'N/A')}** - {dislike.get('authors', 'N/A')}")
+                with col3:
                     if st.button("Remover", key=f"remove_{dislike.get('id')}"):
                         try:
-                            like_response = requests.post(
+                            remove_response = requests.post(
                                 f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                                 json={
                                     "user_id": user_id,
                                     "book_id": dislike.get("id"),
-                                    "action": "clear"
+                                    "action_type": "clear",
                                 }
                             )
-                            if like_response.status_code == 200:
+                            if remove_response.status_code == 200:
                                 st.success("Livro removido dos seus dislikes!")
                         except Exception as e:
                             st.error(f"Erro ao remover dislike: {e}")
-                        # st.rerun()
+                        st.rerun()
         else:
             st.info("✅ Você não marcou nenhum livro como dislike ainda")
     

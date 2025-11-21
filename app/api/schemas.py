@@ -33,8 +33,8 @@ class FeedbackRequest(BaseModel):
     user_id: int = Field(..., gt=0, description="User ID")
     book_id: int = Field(..., gt=0, description="Book ID")
     action_type: ActionType = Field(..., description="Type of feedback")
-    slate_id: str = Field(..., description="Recommendation list ID")
-    pos: int = Field(..., ge=1, le=20, description="Position in slate (1-indexed)")
+    slate_id: Optional[str] = Field(None, description="Recommendation list ID")
+    pos: Optional[int] = Field(None, ge=1, le=20, description="Position in slate (1-indexed)")
     ctx_features: Optional[str] = Field(
         None, description="Context features (JSON string)"
     )

@@ -88,9 +88,9 @@ def _random_approach(db, user_id, n_items):
     return random_books
 
 def _rl_approach(db, user_id, n_items):
-    all_books = crud.get_all_books(db)
+    available_books = crud.get_user_available_books(db, user_id)
 
-    candidate_books = random.sample(all_books, k=min(len(all_books), 30))
+    candidate_books = random.sample(available_books, k=min(len(available_books), 30))
 
     contexts = []
     arms = []

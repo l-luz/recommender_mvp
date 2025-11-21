@@ -42,6 +42,62 @@ def update_user_genres(db: Session, user_id: int, genres: str) -> models.User:
     return user
 
 
+def get_user_book_states(db: Session, user_id: int) -> dict:
+    """
+    Rebuilds the current state of all books with which the user has interacted.
+    Returns a dictionary: {book_id: ActionType}
+    """
+
+    events = (
+        db.query(models.Event)
+        .filter(models.Event.user_id == user_id)
+        .order_by(models.Event.timestamp.asc())  # Importante: Do antigo para o novo
+        .all()
+    )
+
+    current_state = {}
+    for event in events:
+        current_state[event.book_id] = event.action_type
+
+    return current_state
+
+
+def get_user_liked_books_current(db: Session, user_id: int) -> List[models.Book]:
+    """
+    Returns ONLY books that are CURRENTLY liked.
+    If the user clicked Like -> Clear, this book will NOT appear here.
+    """
+    # Pega o mapa de estados
+    states = get_user_book_states(db, user_id)
+
+    # Filtra apenas os IDs que terminaram como LIKE
+    liked_ids = [
+        bid for bid, action in states.items() if action == models.ActionType.LIKE
+    ]
+
+    if not liked_ids:
+        return []
+
+    # Busca os objetos Book no banco
+    return db.query(models.Book).filter(models.Book.id.in_(liked_ids)).all()
+
+
+def get_user_disliked_books_current(db: Session, user_id: int) -> List[models.Book]:
+    """
+    Mesma lógica, mas para Dislikes atuais.
+    """
+    states = get_user_book_states(db, user_id)
+
+    disliked_ids = [
+        bid for bid, action in states.items() if action == models.ActionType.DISLIKE
+    ]
+
+    if not disliked_ids:
+        return []
+
+    return db.query(models.Book).filter(models.Book.id.in_(disliked_ids)).all()
+
+
 #
 #  CATEGORY
 #
@@ -79,18 +135,22 @@ def get_categories_frequency(
     db: Session, skip: int = 0, limit: int = 100
 ) -> List[Tuple[models.Category, int]]:
     """List categories frequency"""
-    return db.query(
-            models.Category,
-            func.count(models.book_categories.c.book_id).label('total_books')
-        )\
-        .join(models.book_categories)\
-        .group_by(models.Category)\
-        .order_by(desc('total_books'))\
-        .offset(skip)\
-        .limit(limit)\
-        .all()
 
-#
+    total_books_expr = func.count(models.book_categories.c.book_id).label("total_books")
+
+    results = (
+        db.query(models.Category, total_books_expr)
+        .join(models.book_categories)
+        .group_by(models.Category)
+        .order_by(desc(total_books_expr))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return [tuple(row) for row in results]
+
+
 # AUTHOR
 #
 def get_all_authors(
@@ -99,11 +159,18 @@ def get_all_authors(
     """List all authors"""
     return db.query(models.Author).offset(skip).limit(limit).all()
 
+
 def get_author_books_ids(
     db: Session, author_id: int, skip: int = 0, limit: int = 100
 ) -> List[int]:
     """List all authors"""
-    return db.query(models.book_authors).filter(models.book_authors.c.author_id == author_id).offset(skip).limit(limit).all()
+    return (
+        db.query(models.book_authors)
+        .filter(models.book_authors.c.author_id == author_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_or_create_author(db: Session, name: str) -> models.Author:
@@ -117,22 +184,31 @@ def get_or_create_author(db: Session, name: str) -> models.Author:
     return author
 
 
+def get_authors_frequency(db: Session, skip: int = 0, limit: int = 100):
+    total_books_expr = func.count(models.book_authors.c.book_id).label("total_books")
 
-def get_authors_frequency(
-    db: Session, skip: int = 0, limit: int = 100
-) -> List[Tuple[models.Author, int]]:
-    """List authors frequency"""
-    return db.query(
-            models.Author,
-            func.count(models.book_authors.c.book_id).label('total_books')
-        )\
-        .join(models.book_authors)\
-        .group_by(models.Author)\
-        .order_by(desc('total_books'))\
-        .offset(skip)\
-        .limit(limit)\
+    results = (
+        db.query(models.Author, total_books_expr)
+        .join(models.book_authors)
+        .group_by(models.Author)
+        .order_by(desc(total_books_expr))
+        .offset(skip).limit(limit)
         .all()
+    )
+    return [tuple(row) for row in results]
 
+def get_publisher_frequency(db: Session, skip: int = 0, limit: int = 100):
+    total_books_expr = func.count().label("total_books") # Conta as linhas
+    
+    results = (
+        db.query(models.Book.publisher, total_books_expr)
+        .filter(models.Book.publisher != None)
+        .group_by(models.Book.publisher)
+        .order_by(desc(total_books_expr))
+        .offset(skip).limit(limit)
+        .all()
+    )
+    return [tuple(row) for row in results]
 #
 #  BOOK
 #
@@ -221,11 +297,18 @@ def get_all_book_ids(db: Session, skip: int = 0, limit: int = 100) -> List[int]:
     )
     return [b.id for b in books]  # type: ignore
 
+
 def get_book_authors_ids(
     db: Session, book_id: int, skip: int = 0, limit: int = 100
 ) -> List[int]:
     """List all authors"""
-    return db.query(models.book_authors).filter(models.book_authors.c.book_id == book_id).offset(skip).limit(limit).all()
+    return (
+        db.query(models.book_authors)
+        .filter(models.book_authors.c.book_id == book_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 #
@@ -357,7 +440,9 @@ def get_user_last_book_event(
     )
 
 
-def get_user_latest_interactions(db: Session, user_id: int, limit: int = 100, skip: int = 0):
+def get_user_latest_interactions(
+    db: Session, user_id: int, limit: int = 100, skip: int = 0
+):
     """Get user la"""
     return (
         db.query(models.Event)
@@ -377,3 +462,15 @@ def get_user_latest_interactions(db: Session, user_id: int, limit: int = 100, sk
         .order_by(models.Event.created_at.desc())
         .all()
     )
+
+
+def get_user_available_books(
+    db: Session, user_id: int, limit: int = 100, skip: int = 0
+):
+    liked_books = get_user_liked_books_current(db, user_id)   
+    disliked_books = get_user_disliked_books(db, user_id)
+
+    liked_ids = [book.id for book in liked_books]
+    disliked_ids = [book.id for book in disliked_books]
+    excluded_ids = liked_ids + disliked_ids
+    return db.query(models.Book).filter(~models.Book.id.in_(excluded_ids)).offset(skip).limit(limit).all()

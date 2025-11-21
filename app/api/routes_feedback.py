@@ -10,6 +10,7 @@ from app.db.models import ActionType
 from app.api import schemas
 from app.core.rl_runtime import trainer
 from app.core.context_features import ContextFeatures
+from app.core.rl_runtime import trainer, features, ARM_INDEX
 
 
 #
@@ -75,24 +76,39 @@ def register_feedback(
             status_code=404, detail=f"User {feedback.user_id} not found"
         )
 
+    book = crud.get_book(db, feedback.book_id)
+    if not book:
+        raise HTTPException(
+            status_code=404, detail=f"Book {feedback.book_id} not found"
+        )
+
     # Convert feedback type
     action_type = _feedback_type_to_action_type(feedback.action_type)
 
     # Calculate reward based on action type
     reward = _calculate_reward(feedback.action_type)
+   
+    slate_id = feedback.slate_id or ""
+    pos = feedback.pos or 0
 
-    # Register event
+    ctx = ContextFeatures().get_context(
+        user_id=feedback.user_id, book_id=feedback.book_id, db=db
+    )
+
+    arm_index = ARM_INDEX[feedback.book_id]
+
     try:
         event = crud.create_event(
             db=db,
             user_id=feedback.user_id,
             book_id=feedback.book_id,
-            slate_id=feedback.slate_id,
-            pos=feedback.pos,
+            slate_id=slate_id,
+            pos=pos, 
             action_type=action_type.value,  # Convert Enum to string
             reward_w=reward,  # weight-adjusted reward
             ctx_features=feedback.ctx_features,
         )
+        trainer.add_feedback(ctx, arm_index, reward)
 
         return schemas.FeedbackResponse(
             success=True,
@@ -123,7 +139,7 @@ def get_user_likes(user_id: int, db: Session = Depends(database.get_db)) -> dict
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
-    books = crud.get_user_liked_books(db, user_id)
+    books = crud.get_user_liked_books_current(db, user_id)
 
     return {
         "user_id": user_id,
@@ -158,7 +174,7 @@ def get_user_dislikes(user_id: int, db: Session = Depends(database.get_db)) -> d
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
-    books = crud.get_user_disliked_books(db, user_id)
+    books = crud.get_user_disliked_books_current(db, user_id)
 
     return {
         "user_id": user_id,
@@ -211,4 +227,3 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
         "dislikes": dislikes_count,
         "unique_books_interacted": len(set(e.book_id for e in all_events)),  # type: ignore
     }
-

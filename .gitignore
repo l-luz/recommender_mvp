@@ -180,6 +180,4 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 *.code-workspace
-/data/raw
-/notebooks
-data/database.db
+/data
