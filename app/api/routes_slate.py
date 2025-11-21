@@ -58,7 +58,7 @@ def get_recommendations(
             book = crud.get_book(db, b_idx)
             if book:
                 data = {
-                    "book_id": b_idx,
+                    "id": b_idx,
                     "title": book.title,
                     "description": book.description or "No description available.",
                     "score": book.avg_rating,

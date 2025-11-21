@@ -35,12 +35,12 @@ def main():
                 col1, col2, col3= st.columns([2, 4, 1])
                 with col1:
                     image = like.get("image", None)
+                    print(type(image))
                     if image and image != "N/A":
                         st.image(image=image, width=100)
-                    else:
-                        st.write("📖")  # TODO: Use a placeholder
                 with col2:
                     st.write(f"**{like.get('title', 'N/A')}** - {like.get('authors', 'N/A')}")
+                    st.write(f"**{like.get('genre', 'N/A')}** - {like.get('avg_rating', 'N/A')}")
                 with col3:
                     if st.button("Remover", key=f"remove_{like.get('id')}"):
                         try:

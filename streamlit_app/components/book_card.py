@@ -23,8 +23,6 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
         image = book.get("image", None)
         if image and image != "N/A":
             st.image(image=image, width=100)
-        else:
-            st.write("📖")  # TODO: Use a placeholder
 
     with col_info:
         st.write(f"**{book.get('title', 'N/A')}**")
@@ -52,14 +50,14 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
                         f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                         json={
                             "user_id": user_id,
-                            "book_id": book.get("book_id"),
+                            "book_id": book.get("id"),
                             "slate_id": slate_idx,
                             "action_type": "like",
                             "pos": idx,
                         },
                     )
-                    # if response.status_code == 200:
-                    #     st.success("Adicionado aos seus likes!")
+                    if response.status_code != 200:
+                        raise Exception(f"{response}")
                 except Exception as e:
                     st.error(f"Erro ao enviar feedback: {e}")
 
@@ -70,14 +68,13 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
                         f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
                         json={
                             "user_id": user_id,
-                            "book_id": book.get("book_id"),
+                            "book_id": book.get("id"),
                             "slate_id": slate_idx,
                             "action_type": "dislike",
                             "pos": idx,
                         },
                     )
-                    # if response.status_code == 200:
-                        # st.success("Adicionado aos seus dislikes!")
-                        # st.info("Ok, não recomendaremos similar a este")
+                    if response.status_code != 200:
+                        raise Exception(f"{response}")
                 except Exception as e:
                     st.error(f"Erro ao enviar feedback: {e}")

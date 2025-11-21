@@ -37,10 +37,10 @@ def main():
                     image = dislike.get("image", None)
                     if image and image != "N/A":
                         st.image(image=image, width=100)
-                    else:
-                        st.write("📖")  # TODO: Use a placeholder
                 with col2:
                     st.write(f"📖 **{dislike.get('title', 'N/A')}** - {dislike.get('authors', 'N/A')}")
+                    st.write(f"**{dislike.get('genre', 'N/A')}** - {dislike.get('avg_rating', 'N/A')}")
+
                 with col3:
                     if st.button("Remover", key=f"remove_{dislike.get('id')}"):
                         try:

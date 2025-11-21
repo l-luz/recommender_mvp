@@ -38,7 +38,6 @@ def main():
                 st.session_state.username = username
                 st.session_state.token = data.get("token")
                 st.success(f"✅ Bem-vindo, {username}!")
-                st.balloons()
                 
                 # Redirecionar
                 import time

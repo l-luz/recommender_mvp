@@ -76,18 +76,18 @@ def main():
         
         st.divider()
         
-        # Estatísticas
-        st.subheader("📊 Suas Estatísticas")
-        col1, col2, col3 = st.columns(3)
+        # # Estatísticas
+        # st.subheader("📊 Suas Estatísticas")
+        # col1, col2, col3 = st.columns(3)
         
-        with col1:
-            st.metric("Likes", 0)  # TODO: Contar likes
+        # with col1:
+        #     st.metric("Likes", 0)  # TODO: Contar likes
         
-        with col2:
-            st.metric("Dislikes", 0)  # TODO: Contar dislikes
+        # with col2:
+        #     st.metric("Dislikes", 0)  # TODO: Contar dislikes
         
-        with col3:
-            st.metric("Livros Explorados", 0)  # TODO: Contar eventos
+        # with col3:
+        #     st.metric("Livros Explorados", 0)  # TODO: Contar eventos
     
     except Exception as e:
         st.error(f"Erro ao carregar perfil: {e}")
