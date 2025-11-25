@@ -73,7 +73,7 @@ class BookList(BaseModel):
 
     user_id: int
     total: int
-    books: list[BookBase]
+    books: list[BookDetail]
 
 
 # ==================== Event/History Schemas ====================
@@ -130,7 +130,7 @@ class BookRecommendation(BaseModel):
     title: str
     authors: Optional[str] = None
     description: Optional[str] = None
-    genre: Optional[str] = None
+    categories: Optional[str] = None
     score: Optional[float] = None
     image: Optional[str] = None
 
@@ -151,7 +151,7 @@ class SlateResponse(BaseModel):
     recommendations: list[BookRecommendation]
 
 
-class GenresList(BaseModel):
-    """Response for list of genres"""
+class CategoryList(BaseModel):
+    """Response for list of categories"""
 
-    genres: list[str]
+    categories: list[str]

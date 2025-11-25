@@ -38,6 +38,6 @@ def test_slate_caps_n_items(client, user_and_books):
     assert resp.status_code == 200
     assert len(data["recommendations"]) <= 10
     assert all(
-        "authors" in item and "genre" in item and "image" in item
+        "authors" in item and "categories" in item and "image" in item
         for item in data["recommendations"]
     )

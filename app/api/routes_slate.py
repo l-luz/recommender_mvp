@@ -51,13 +51,13 @@ def get_recommendations(
                 data = {
                     "book_id": b_idx,
                     "title": book.title,
-                    "description": book.description or "No description available.",
+                    "description": book.description if book.description != "None" else "No description available.",
                     "score": book.avg_rating,
                     "image": book.get_image
                     or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
                 }
                 data["authors"] = ",".join(book.get_authors_list) if book.get_authors_list else "N/A"  # type: ignore
-                data["genre"] = ",".join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
+                data["categories"] = ",".join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
                 recommended_data.append(data)
 
         return {

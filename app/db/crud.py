@@ -32,11 +32,11 @@ def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def update_user_genres(db: Session, user_id: int, genres: str) -> models.User:
-    """Update user's preferred genres"""
+def update_user_genres(db: Session, user_id: int, categories: str) -> models.User:
+    """Update user's preferred categories"""
     user = get_user(db, user_id)
     if user:
-        setattr(user, "preferred_genres", genres)
+        setattr(user, "preferred_genres", categories)
         db.commit()
         db.refresh(user)
     return user

@@ -57,7 +57,7 @@ def test_profile_update_empty_genres(client):
 def test_get_genres(client):
     resp = client.get("/users/genres")
     assert resp.status_code == 200
-    assert "genres" in resp.json()
+    assert "categories" in resp.json()
 
 
 def test_profile_update_and_retrieval(client):

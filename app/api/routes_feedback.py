@@ -143,8 +143,9 @@ def get_user_likes(user_id: int, db: Session = Depends(database.get_db)) -> dict
                 "id": book.id,
                 "title": book.title,
                 "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
-                "genre": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
                 "avg_rating": book.avg_rating,
+                "description": book.description,
                 "image": book.get_image
                 or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
             }
@@ -180,8 +181,9 @@ def get_user_dislikes(user_id: int, db: Session = Depends(database.get_db)) -> d
                 "id": book.id,
                 "title": book.title,
                 "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
-                "genre": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
                 "avg_rating": book.avg_rating,
+                "description": book.description,
                 "image": book.get_image
                 or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
             }

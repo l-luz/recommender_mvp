@@ -35,8 +35,8 @@ def _load_item_config(path: str = RECOMMENDER_CONFIG["item_config"]):
         data = json.load(f)
 
     # Normalizes keys and types
-    cat_ids = data.get("top_categories_ids", [])
-    author_ids = data.get("top_authors_ids", [])
+    cat_ids = data.get("top_categories", [])
+    author_ids = data.get("top_authors", [])
     publishers = data.get("top_publishers", [])
 
     # Ensures correct types

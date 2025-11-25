@@ -149,22 +149,22 @@ def update_profile(
         raise HTTPException(status_code=500, detail=f"Error updating profile: {str(e)}")
 
 
-@router.get("/genres", response_model=schemas.GenresList)
+@router.get("/genres", response_model=schemas.CategoryList)
 def get_genre_options(
     db: Session = Depends(database.get_db),
-) -> schemas.GenresList:
+) -> schemas.CategoryList:
     """Returns available genres options
     Args:
         db: Database session
     Returns:
         List of genres
     """
-    genres = crud.get_all_categories(db)
-    genre_strings: list[str] = [genre.name for genre in genres]  # type: ignore
+    categories = crud.get_all_categories(db)
+    genre_strings: list[str] = [genre.name for genre in categories]  # type: ignore
 
     try:
-        return schemas.GenresList(genres=genre_strings)
+        return schemas.CategoryList(categories=genre_strings)
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error retrieving genres: {str(e)}"
+            status_code=500, detail=f"Error retrieving categories: {str(e)}"
         )

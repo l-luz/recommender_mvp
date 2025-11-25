@@ -38,7 +38,7 @@ book_authors = Table(
 
 
 class Category(Base):
-    """Book categories/genres table"""
+    """Book categories/genre table"""
 
     __tablename__ = "categories"
 
@@ -130,7 +130,7 @@ class Book(Base):
 
     # One to Many relationship
     events = relationship("Event", back_populates="book", cascade="all, delete-orphan")
-
+    
     @property
     def get_image(self) -> Optional[str]:
         """
