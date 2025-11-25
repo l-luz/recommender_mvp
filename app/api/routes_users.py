@@ -9,16 +9,10 @@ from app.db import crud, database
 from app.api import schemas
 
 
-#
-# Router Setup
-#
-
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-#
-# Endpoints
-#
+# ==================== Endpoints ====================
 
 
 @router.post("/register", response_model=schemas.FeedbackResponse)
@@ -56,9 +50,7 @@ def register_user(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error registering user: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
 
 
 @router.post("/login", response_model=schemas.FeedbackResponse)
@@ -80,15 +72,11 @@ def login_user(
     """
     user = crud.get_user_by_username(db, credentials.username)
     if not user:
-        raise HTTPException(
-            status_code=401, detail="Invalid username or password"
-        )
+        raise HTTPException(status_code=401, detail="Invalid username or password")
 
     # TODO: use hashing bcrypt
     if user.password != credentials.password:  # type: ignore
-        raise HTTPException(
-            status_code=401, detail="Invalid username or password"
-        )
+        raise HTTPException(status_code=401, detail="Invalid username or password")
 
     return schemas.FeedbackResponse(
         success=True,
@@ -114,7 +102,7 @@ def get_profile(user_id: int, db: Session = Depends(database.get_db)) -> dict:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
     genres_list = []
-    if user.preferred_genres: # type: ignore
+    if user.preferred_genres:  # type: ignore
         genres_list = user.preferred_genres.split(",")
 
     return {
@@ -147,7 +135,9 @@ def update_profile(
 
     try:
         if profile_data.preferred_genres:
-            crud.update_user_genres(db, user_id, ','.join(profile_data.preferred_genres))
+            crud.update_user_genres(
+                db, user_id, ",".join(profile_data.preferred_genres)
+            )
 
         return schemas.FeedbackResponse(
             success=True,
@@ -156,11 +146,9 @@ def update_profile(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error updating profile: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error updating profile: {str(e)}")
 
-# TODO: switch to another route
+
 @router.get("/genres", response_model=schemas.GenresList)
 def get_genre_options(
     db: Session = Depends(database.get_db),
@@ -169,15 +157,13 @@ def get_genre_options(
     Args:
         db: Database session
     Returns:
-        List of genres    
+        List of genres
     """
     genres = crud.get_all_categories(db)
-    genre_strings: list[str] = [genre.name for genre in genres] # type: ignore
+    genre_strings: list[str] = [genre.name for genre in genres]  # type: ignore
 
     try:
-        return schemas.GenresList(
-            genres=genre_strings
-        )
+        return schemas.GenresList(genres=genre_strings)
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error retrieving genres: {str(e)}"

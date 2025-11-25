@@ -18,11 +18,9 @@ router = APIRouter(prefix="/slate", tags=["slate"])
 # ==================== Endpoints ====================
 
 
-
 @router.post("/recommend", response_model=schemas.SlateResponse)
 def get_recommendations(
-    user_id: int,
-    n_items: int, db: Session = Depends(database.get_db)
+    user_id: int, n_items: int, db: Session = Depends(database.get_db)
 ) -> dict:
     """
     Returns a slate (list) of recommendations for a user.
@@ -39,9 +37,7 @@ def get_recommendations(
     """
     user = crud.get_user(db, user_id)
     if not user:
-        raise HTTPException(
-            status_code=404, detail=f"User {user_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
     try:
         slate_id = str(uuid.uuid4())
@@ -57,10 +53,11 @@ def get_recommendations(
                     "title": book.title,
                     "description": book.description or "No description available.",
                     "score": book.avg_rating,
-                    "image": book.get_image or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
-                    }
-                data["authors"] =  ','.join(book.get_authors_list) if book.get_authors_list else "N/A" # type: ignore
-                data["genre"] = ','.join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
+                    "image": book.get_image
+                    or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
+                }
+                data["authors"] = ",".join(book.get_authors_list) if book.get_authors_list else "N/A"  # type: ignore
+                data["genre"] = ",".join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
                 recommended_data.append(data)
 
         return {
@@ -75,12 +72,14 @@ def get_recommendations(
             status_code=500, detail=f"Error generating recommendations: {str(e)}"
         )
 
+
 def _random_approach(db, user_id, n_items):
     all_books = crud.get_all_books(db, skip=0, limit=100)
 
     random_books = random.sample(all_books, min(n_items, len(all_books)))
-                    
+
     return random_books
+
 
 def _rl_approach(db, user_id, n_items):
     available_books = crud.get_user_available_books(db, user_id)
@@ -90,7 +89,7 @@ def _rl_approach(db, user_id, n_items):
     contexts = []
     arms = []
 
-    if rl.features or rl.recommender is None:
+    if rl.features is None or rl.recommender is None:
         raise RuntimeError("RL trainer not initialized")
 
     for book in candidate_books:
@@ -101,9 +100,6 @@ def _rl_approach(db, user_id, n_items):
     contexts = np.array(contexts)
 
     chosen_books_ids = rl.recommender.recommend(
-        candidate_arms=arms,
-        contexts=contexts,
-        n_recommendations=n_items
+        candidate_arms=arms, contexts=contexts, n_recommendations=n_items
     )
     return chosen_books_ids
-

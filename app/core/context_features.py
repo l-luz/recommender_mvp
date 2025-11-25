@@ -12,6 +12,7 @@ import math
 import json
 import os
 
+
 def _load_item_config(path: str = RECOMMENDER_CONFIG["item_config"]):
     """
     Load item configuration (top categories/authors/publishers) generated
@@ -49,6 +50,7 @@ def _load_item_config(path: str = RECOMMENDER_CONFIG["item_config"]):
         "top_publishers": publishers,
     }
 
+
 class ContextFeatures:
     """
     Extracts and combines user and item features for context.
@@ -58,14 +60,14 @@ class ContextFeatures:
         """
         Initializes feature extractor.
 
-        Dimensões:
+        Dimensions:
 
         user_features: 3
             [ like_rate, activity, bias ]
 
         item_features:
             [ norm_rating, norm_popularity, genre_match,
-              multi-hot categorias, multi-hot autores, multi-hot publishers ]
+              multi-hot categories, multi-hot authors, multi-hot publishers ]
         """
 
         self.user_dim = 3  # like_rate, activity, bias
@@ -73,15 +75,13 @@ class ContextFeatures:
         cfg = _load_item_config()
 
         self.top_category_ids: List[int] = cfg["top_categories_ids"]
-        self.top_author_ids: List[int] = cfg["top_authors_ids"]
-        self.top_publishers: List[str] = cfg["top_publishers"]
+        self.top_author_ids: List[int] = cfg["top_authors_ids"] # TODO: check if is empty
+        self.top_publishers: List[str] = cfg["top_publishers"] # TODO: check if is empty
 
         # maps id -> index (for multi-hot)
         self.cat_index = {cid: i for i, cid in enumerate(self.top_category_ids)}
         self.author_index = {aid: i for i, aid in enumerate(self.top_author_ids)}
-        self.publisher_index = {
-            name: i for i, name in enumerate(self.top_publishers)
-        }
+        self.publisher_index = {name: i for i, name in enumerate(self.top_publishers)}
 
         # 3 numerical (rating, popularity, genre_match) +
         # K_cats + K_authors + K_publishers
@@ -182,9 +182,7 @@ class ContextFeatures:
                 has_intersection = any(c in prefs for c in book_cats)
                 genre_match = 1.0 if has_intersection else 0.0
 
-        num_feats = np.array(
-            [norm_rating, norm_popularity, genre_match], dtype=float
-        )
+        num_feats = np.array([norm_rating, norm_popularity, genre_match], dtype=float)
 
         # multi-hot categories (by ID)
         cat_vec = np.zeros(len(self.top_category_ids), dtype=float)

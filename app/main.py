@@ -1,6 +1,7 @@
 """
 Entry point do FastAPI
 """
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,7 @@ from app.core import rl_runtime as rl
 from .db.database import get_db
 from .utils.config import FASTAPI_CONFIG
 from .api import routes_slate, routes_feedback, routes_users
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,9 +24,7 @@ async def lifespan(app: FastAPI):
 
 # ==================== FastAPI ====================
 app = FastAPI(
-    title=FASTAPI_CONFIG["title"],
-    version=FASTAPI_CONFIG["version"],
-    lifespan=lifespan
+    title=FASTAPI_CONFIG["title"], version=FASTAPI_CONFIG["version"], lifespan=lifespan
 )
 
 # ==================== CORS ====================
@@ -40,6 +40,7 @@ app.include_router(routes_feedback.router)
 app.include_router(routes_users.router)
 app.include_router(routes_slate.router)
 
+
 @app.get("/")
 def read_root():
     """Root endpoint"""
@@ -52,9 +53,10 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=FASTAPI_CONFIG["host"],
         port=FASTAPI_CONFIG["port"],
-        reload=True
+        reload=True,
     )

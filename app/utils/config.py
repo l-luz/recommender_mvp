@@ -25,7 +25,7 @@ RECOMMENDER_CONFIG = {
     "model_type": "linucb",
     "alpha": 1.0,  # LinUCB exploration parameter
     "batch_size": 32,  # Mini-batch actions size for update
-    "item_config": EMBEDDINGS_DIR / "item_config.json"
+    "item_config": EMBEDDINGS_DIR / "item_config.json",
 }
 
 # Streamlit Settings
@@ -34,7 +34,7 @@ STREAMLIT_CONFIG = {
     "page_title": "Recommender MVP",
     "layout": "wide",
     "api_url": "http://127.0.0.1:8000",
-    "api_timeout": 5
+    "api_timeout": 5,
 }
 
 # FastAPI Settings

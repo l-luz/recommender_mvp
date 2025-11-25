@@ -14,7 +14,7 @@ from sqlalchemy import (
     Table,
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, UTC
 import enum
 import ast
 from .database import Base
@@ -72,7 +72,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)  # Password hash
     preferred_genres = Column(Text, nullable=True)  # comma-separated
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(UTC))
 
     # Relationship
     events = relationship("Event", back_populates="user", cascade="all, delete-orphan")
@@ -173,12 +173,7 @@ class ActionType(str, enum.Enum):
 
     LIKE = "like"  # positive feedback
     DISLIKE = "dislike"  # negative feedback
-
-    # Remove to simplify operations
     CLEAR = "clear"  # feedback removed
-    IGNORED = "ignored"  # slate updated without user action
-    # CLICK = "click"  # explicit feedback
-    # What is the relevance? user clicked to see more but did not like or dislike... Or he can also give like/dislike after click
 
 
 class Event(Base):
@@ -192,10 +187,10 @@ class Event(Base):
     slate_id = Column(String, index=True, nullable=False)  # Recommendation list ID
     pos = Column(Integer, nullable=False)  # 1..K
     action_type = Column(Enum(ActionType))
-    reward = Column(Float, default=0.0)  # 0 | 1 dislike | like
+    reward = Column(Float, default=0.0)
     reward_w = Column(Float, default=0.0)  # weight-adjusted reward
     ctx_features = Column(String, nullable=True)  # JSON
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=datetime.now(UTC), index=True)
 
     # Relationship
     user = relationship("User", back_populates="events")

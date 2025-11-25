@@ -7,6 +7,7 @@ from typing import Dict
 from app.utils.config import STREAMLIT_CONFIG
 import requests
 
+
 def send_feedback(book_id, slate_id, pos, action):
     try:
         requests.post(
@@ -25,6 +26,7 @@ def send_feedback(book_id, slate_id, pos, action):
 
     except Exception as e:
         st.error(f"Erro ao enviar feedback: {e}")
+
 
 def render_book_card(book: Dict, idx: int, slate_idx: int):
     """
@@ -62,7 +64,17 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
         foot1, foot2 = st.columns(2)
         book_id = book.get("book_id")
         with foot1:
-            st.button("👍 Like", key=f"like-{idx}", on_click=send_feedback, args=(book_id, slate_idx, idx, "like"))
+            st.button(
+                "👍 Like",
+                key=f"like-{idx}",
+                on_click=send_feedback,
+                args=(book_id, slate_idx, idx, "like"),
+            )
 
         with foot2:
-            st.button("👎 Dislike", key=f"dislike-{idx}", on_click=send_feedback, args=(book_id, slate_idx, idx, "dislike"))
+            st.button(
+                "👎 Dislike",
+                key=f"dislike-{idx}",
+                on_click=send_feedback,
+                args=(book_id, slate_idx, idx, "dislike"),
+            )

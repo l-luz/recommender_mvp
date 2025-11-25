@@ -11,7 +11,7 @@ class OnlineTrainer:
     """
     Manages online model updates with mini-batches.
     """
-    
+
     def __init__(self, recommender, batch_size: int = 32):
         """
         Initialize trainer.
@@ -23,13 +23,8 @@ class OnlineTrainer:
         self.recommender = recommender
         self.batch_size = batch_size
         self.buffer: List[Tuple] = []  # buffer (context, arm, reward)
-    
-    def add_feedback(
-        self,
-        context: np.ndarray,
-        arm: int,
-        reward: float
-    ):
+
+    def add_feedback(self, context: np.ndarray, arm: int, reward: float):
         """
         Adds feedback to the buffer.
 
@@ -39,20 +34,20 @@ class OnlineTrainer:
             reward: Reward
         """
         self.buffer.append((context, arm, reward))
-        
+
         if len(self.buffer) >= self.batch_size:
             self.flush()
-    
+
     def flush(self):
         """
         Processes accumulated buffer and updates template.
         """
         if not self.buffer:
             return
-        
+
         contexts = np.array([x[0] for x in self.buffer])
         arms = np.array([x[1] for x in self.buffer])
         rewards = np.array([x[2] for x in self.buffer])
-        
+
         self.recommender.batch_update(contexts, arms, rewards)
         self.buffer.clear()

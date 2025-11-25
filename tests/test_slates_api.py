@@ -1,5 +1,6 @@
 """FastAPI slate route tests."""
 
+
 def test_slate_recommendations_success(client, user_and_books, db_session):
     user, books = user_and_books
 

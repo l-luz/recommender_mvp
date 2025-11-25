@@ -2,6 +2,7 @@
 Rota /feedback -> registra like/dislike de usuários
 """
 
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -48,18 +49,17 @@ def _calculate_reward(action_type: schemas.ActionType) -> float:
 def register_feedback(
     feedback: schemas.FeedbackRequest, db: Session = Depends(database.get_db)
 ) -> schemas.FeedbackResponse:
-    """    
-    Registers user feedback about a book.    
-    Args:    
-        feedback: FeedbackRequest with user_id, book_id, action_type, slate_id, pos    
-    db: Database session    
-    Returns:    
-        FeedbackResponse confirming registration    
-    Raises:    
-        HTTPException: If user or book does not exist    
+    """
+    Registers user feedback about a book.
+    Args:
+        feedback: FeedbackRequest with user_id, book_id, action_type, slate_id, pos
+    db: Database session
+    Returns:
+        FeedbackResponse confirming registration
+    Raises:
+        HTTPException: If user or book does not exist
         db: Database session
     """
-
 
     user = crud.get_user(db, feedback.user_id)
     if not user:
@@ -79,14 +79,14 @@ def register_feedback(
     last_event = crud.get_user_last_book_event(db, feedback.user_id, feedback.book_id)
     # Calculate reward based on action type
     reward = _calculate_reward(feedback.action_type)
-   
+
     slate_id = feedback.slate_id or ""
     pos = feedback.pos or -1
 
     ctx = ContextFeatures().get_context(
         user_id=feedback.user_id, book_id=feedback.book_id, db=db
     )
-
+    ctx_json = json.dumps(ctx.tolist())
     arm_index = rl.ARM_INDEX[feedback.book_id]
 
     try:
@@ -95,15 +95,15 @@ def register_feedback(
             user_id=feedback.user_id,
             book_id=feedback.book_id,
             slate_id=slate_id,
-            pos=pos, 
+            pos=pos,
             action_type=action_type.value,  # Convert Enum to string
             reward_w=reward,  # weight-adjusted reward
-            ctx_features=feedback.ctx_features,
+            ctx_features=ctx_json,
         )
         if rl.trainer is None:
             raise RuntimeError("RL trainer not initialized")
         rl.trainer.add_feedback(ctx, arm_index, reward)
-            
+
         return schemas.FeedbackResponse(
             success=True,
             message=f"Feedback '{feedback.action_type.value}' registered successfully",
@@ -142,10 +142,11 @@ def get_user_likes(user_id: int, db: Session = Depends(database.get_db)) -> dict
             {
                 "id": book.id,
                 "title": book.title,
-                "authors": ','.join(book.get_authors_list) if book.get_authors_list else "N/A", # type: ignore
-                "genre": ','.join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
+                "genre": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
                 "avg_rating": book.avg_rating,
-                "image": book.get_image or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
+                "image": book.get_image
+                or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
             }
             for book in books
         ],
@@ -178,10 +179,11 @@ def get_user_dislikes(user_id: int, db: Session = Depends(database.get_db)) -> d
             {
                 "id": book.id,
                 "title": book.title,
-                "authors": ','.join(book.get_authors_list) if book.get_authors_list else "N/A", # type: ignore
-                "genre": ','.join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
+                "genre": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
                 "avg_rating": book.avg_rating,
-                "image": book.get_image or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
+                "image": book.get_image
+                or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
             }
             for book in books
         ],

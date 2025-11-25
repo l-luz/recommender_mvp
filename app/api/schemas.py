@@ -8,23 +8,15 @@ from typing import Optional, List
 from datetime import datetime
 
 
-#
-# Enums
-#
-
-
 class ActionType(str, Enum):
     """Types of user actions"""
 
     LIKE = "like"
     DISLIKE = "dislike"
     CLEAR = "clear"
-    IGNORED = "ignored"
 
 
-#
-# Feedback Schemas
-#
+# ==================== Feedback Schemas ====================
 
 
 class FeedbackRequest(BaseModel):
@@ -34,7 +26,9 @@ class FeedbackRequest(BaseModel):
     book_id: int = Field(..., gt=0, description="Book ID")
     action_type: ActionType = Field(..., description="Type of feedback")
     slate_id: Optional[str] = Field(None, description="Recommendation list ID")
-    pos: Optional[int] = Field(None, ge=1, le=20, description="Position in slate (1-indexed)")
+    pos: Optional[int] = Field(
+        None, ge=0, le=20, description="Position in slate (1-indexed)"
+    )
     ctx_features: Optional[str] = Field(
         None, description="Context features (JSON string)"
     )
@@ -49,9 +43,7 @@ class FeedbackResponse(BaseModel):
     event_id: Optional[int] = None
 
 
-#
-# Book Schemas
-#
+# ==================== Book Schemas ====================
 
 
 class BookBase(BaseModel):
@@ -84,9 +76,7 @@ class BookList(BaseModel):
     books: list[BookBase]
 
 
-#
-# Event/History Schemas
-#
+# ==================== Event/History Schemas ====================
 
 
 class EventBase(BaseModel):
@@ -109,8 +99,9 @@ class HistorySummary(BaseModel):
     dislikes: int
     unique_books_interacted: int
 
+
 #
-# User Schemas
+# ==================== User Schemas ====================
 #
 class LoginRequest(BaseModel):
     """Input form for user login"""
@@ -128,7 +119,7 @@ class UserBase(BaseModel):
 
 
 #
-# Slate/Recommendation Schemas
+# ==================== Slate/Recommendation Schemas ====================
 #
 
 
@@ -164,4 +155,3 @@ class GenresList(BaseModel):
     """Response for list of genres"""
 
     genres: list[str]
-

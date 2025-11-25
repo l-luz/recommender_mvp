@@ -12,29 +12,21 @@ class BaseRecommender:
     """
 
     def recommend(
-        self,
-        candidate_arms: List[int],
-        contexts: np.ndarray,
-        n_recommendations: int
+        self, candidate_arms: List[int], contexts: np.ndarray, n_recommendations: int
     ) -> List[int]:
-        """    
+        """
         Returns a list of selected arms.
-            
-        Args:    
-            context: Vector of context features (shape: context_dim,)    
+
+        Args:
+            context: Vector of context features (shape: context_dim,)
             n_recommendations: Number of recommendations
-        
+
         Returns:
             List of indexes of recommended items
         """
         raise NotImplementedError
 
-    def update(
-        self,
-        context: np.ndarray,
-        arm: int,
-        reward: float
-    ):
+    def update(self, context: np.ndarray, arm: int, reward: float):
         """
         Update the model in a single step (online learning).
 
@@ -45,12 +37,7 @@ class BaseRecommender:
         """
         raise NotImplementedError
 
-    def batch_update(
-        self,
-        contexts: np.ndarray,
-        arms: np.ndarray,
-        rewards: np.ndarray
-    ):
+    def batch_update(self, contexts: np.ndarray, arms: np.ndarray, rewards: np.ndarray):
         """
         Updates in mini-batches — by default, it just calls update repeatedly.
 

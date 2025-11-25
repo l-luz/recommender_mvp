@@ -17,7 +17,7 @@ def run_fastapi():
     print("🚀 Iniciando FastAPI...")
     subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--reload"],
-        cwd=os.path.dirname(__file__)
+        cwd=os.path.dirname(__file__),
     )
     time.sleep(2)  # Aguardar inicialização
 
@@ -27,7 +27,7 @@ def run_streamlit():
     print("🎨 Iniciando Streamlit...")
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", "streamlit_app/main.py"],
-        cwd=os.path.dirname(__file__)
+        cwd=os.path.dirname(__file__),
     )
 
 
@@ -37,14 +37,14 @@ def main():
     print("   Recommender MVP - FastAPI + Streamlit")
     print("=" * 50)
     print()
-    
+
     # FastAPI em background
     run_fastapi()
-    
+
     print(f"✅ FastAPI rodando em http://127.0.0.1:8000")
     print(f"📚 Docs disponível em http://127.0.0.1:8000/docs")
     print()
-    
+
     # Streamlit em foreground
     try:
         run_streamlit()

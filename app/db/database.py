@@ -7,17 +7,17 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
 
-# Definir diretório de dados
+# Set data directory
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 DATABASE_URL = f"sqlite:///{DATA_DIR}/database.db"
 
-# Criar engine
+# Create engine
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base para models
+# Base for models
 Base = declarative_base()
 
 

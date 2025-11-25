@@ -62,13 +62,15 @@ class LinUCBRecommender(BaseRecommender):
             x = x.reshape(-1, 1)
 
             # Inversion of A (Ridge Regression covariance)
-            A_inv = np.linalg.inv(self.A[arm]) # TODO: if it takes too long, the problem is probably here. Use Sherman-Morrison?
+            A_inv = np.linalg.inv(
+                self.A[arm]
+            )  # TODO: if it takes too long, the problem is probably here. Use Sherman-Morrison?
 
-            theta = A_inv @ self.b[arm] # Coefficient estimates
+            theta = A_inv @ self.b[arm]  # Coefficient estimates
 
             # UCB Score Calculation
-            mean = theta.T @ x # Mean prediction (exploitation)
-            var = np.sqrt(x.T @ A_inv @ x) # Confidence interval (exploration)
+            mean = theta.T @ x  # Mean prediction (exploitation)
+            var = np.sqrt(x.T @ A_inv @ x)  # Confidence interval (exploration)
             p = (mean + self.alpha * var).item()
             scores.append(p)
 

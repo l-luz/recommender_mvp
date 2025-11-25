@@ -29,6 +29,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 def fetch_slate(user_id):
     resp = requests.post(
         f"{STREAMLIT_CONFIG['api_url']}/slate/recommend",
@@ -41,6 +42,7 @@ def fetch_slate(user_id):
         "slate_id": data.get("slate_id"),
     }
     st.rerun()
+
 
 def main():
     """Página principal de recomendações"""
@@ -63,7 +65,7 @@ def main():
         slate = st.session_state.get("slate", None)
         recommendations = slate.get("recommendations", [])
         slate_id = slate.get("slate_id", None)
-    
+
         if recommendations is not None:
             cols = st.columns(2)
             for idx, book in enumerate(recommendations):

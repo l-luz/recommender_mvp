@@ -106,16 +106,6 @@ pytest tests/test_api.py -v
 
 ## 🛠️ Desenvolvimento
 
-### Completar TODOs
-
-- [ ] Implementar contexto_features.py (extrair features real)
-- [ ] Implementar recommender.py (integrar MABWiser)
-- [ ] Conectar rotas FastAPI com lógica
-- [ ] Conectar Streamlit com API
-- [ ] Criar dataset de livros/usuários
-- [ ] Gerar embeddings de livros
-- [ ] Testes end-to-end
-
 ### Direções Futuras
 
 - [ ] Autenticação JWT
