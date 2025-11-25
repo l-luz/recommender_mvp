@@ -1,5 +1,5 @@
 """
-Components - Renderização de card de livro
+Components - Book card rendering
 """
 
 import streamlit as st
@@ -8,7 +8,7 @@ from app.utils.config import STREAMLIT_CONFIG
 import requests
 
 
-def send_feedback(book_id, slate_id, pos, action):
+def _send_feedback(book_id, slate_id, pos, action):
     try:
         requests.post(
             f"{STREAMLIT_CONFIG['api_url']}/feedback/register",
@@ -30,13 +30,12 @@ def send_feedback(book_id, slate_id, pos, action):
 
 def render_book_card(book: Dict, idx: int, slate_idx: int):
     """
-    Renderiza um card de livro em Streamlit.
+    Renders a book card in Streamlit.
 
     Args:
-        book: Dicionário com dados do livro
-        idx: Índice para key unique
+        book: Dictionary with book data
+        idx: Index for unique key
     """
-    user_id = st.session_state.user_id
     col_img, col_info = st.columns([1, 3])
 
     with col_img:
@@ -47,19 +46,19 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
     with col_info:
         st.write(f"**{book.get('title', 'N/A')}**")
         st.caption(f"por {book.get('authors', 'N/A')}")
-        st.write(book.get("description", "Sem descrição")[:100])
+        with st.expander("Description"):
+            st.write(
+                f"**{book.get("description", 'N/A')}**"
+            )
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("Score", f"{book.get('score', 0):.2f}")
+            st.metric("Rating\n", f"⭐{book.get('score', 0):}/5.0")
 
         with col2:
 
-            st.write(f"Gênero: {book.get('genre', 'N/A')}")
-
-        with col3:
-            st.write(f"Rating: ⭐ {book.get('rating', 0)}/5")
+            st.write(f"Gênero: {book.get('categories', 'N/A')}")
 
         foot1, foot2 = st.columns(2)
         book_id = book.get("book_id")
@@ -67,7 +66,7 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
             st.button(
                 "👍 Like",
                 key=f"like-{idx}",
-                on_click=send_feedback,
+                on_click=_send_feedback,
                 args=(book_id, slate_idx, idx, "like"),
             )
 
@@ -75,6 +74,6 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
             st.button(
                 "👎 Dislike",
                 key=f"dislike-{idx}",
-                on_click=send_feedback,
+                on_click=_send_feedback,
                 args=(book_id, slate_idx, idx, "dislike"),
             )

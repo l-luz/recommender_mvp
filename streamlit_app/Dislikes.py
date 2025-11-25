@@ -5,6 +5,7 @@ Streamlit App - Página de Dislikes
 import streamlit as st
 import requests
 from app.utils.config import STREAMLIT_CONFIG
+from streamlit_app.components.list_feedbacks import render_feedback_card
 
 st.set_page_config(page_title="Meus Dislikes", layout="wide")
 
@@ -30,38 +31,9 @@ def main():
         dislikes = response.json().get("books", [])
 
         if dislikes:
-            for dislike in dislikes:
-                col1, col2, col3 = st.columns([2, 4, 1])
-
-                with col1:
-                    image = dislike.get("image", None)
-                    if image and image != "N/A":
-                        st.image(image=image, width=100)
-                with col2:
-                    st.write(
-                        f"📖 **{dislike.get('title', 'N/A')}** - {dislike.get('authors', 'N/A')}"
-                    )
-                    st.write(
-                        f"**{dislike.get('genre', 'N/A')}** - {dislike.get('avg_rating', 'N/A')}"
-                    )
-
-                with col3:
-                    if st.button("Remover", key=f"remove_{dislike.get('id')}"):
-                        try:
-                            remove_response = requests.post(
-                                f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
-                                json={
-                                    "user_id": user_id,
-                                    "book_id": dislike.get("id"),
-                                    "action_type": "clear",
-                                },
-                            )
-                            if remove_response.status_code == 200:
-                                st.success("Livro removido dos seus dislikes!")
-                        except Exception as e:
-                            st.error(f"Erro ao remover dislike: {e}")
-                        finally:
-                            st.rerun()
+            for idx, dislike in enumerate(dislikes):
+                render_feedback_card(dislike, idx)
+            
         else:
             st.info("✅ Você não marcou nenhum livro como dislike ainda")
 

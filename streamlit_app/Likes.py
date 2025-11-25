@@ -5,6 +5,7 @@ Streamlit App - Página de Likes
 import streamlit as st
 import requests
 from app.utils.config import STREAMLIT_CONFIG
+from streamlit_app.components.list_feedbacks import render_feedback_card
 
 st.set_page_config(page_title="Meus Likes", layout="wide")
 
@@ -31,36 +32,8 @@ def main():
         likes = response.json().get("books", [])
 
         if likes:
-            for like in likes:
-                col1, col2, col3 = st.columns([2, 4, 1])
-                with col1:
-                    image = like.get("image", None)
-                    if image and image != "N/A":
-                        st.image(image=image, width=100)
-                with col2:
-                    st.write(
-                        f"**{like.get('title', 'N/A')}** - {like.get('authors', 'N/A')}"
-                    )
-                    st.write(
-                        f"**{like.get('genre', 'N/A')}** - {like.get('avg_rating', 'N/A')}"
-                    )
-                with col3:
-                    if st.button("Remover", key=f"remove_{like.get('id')}"):
-                        try:
-                            remove_response = requests.post(
-                                f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
-                                json={
-                                    "user_id": user_id,
-                                    "book_id": like.get("id"),
-                                    "action_type": "clear",
-                                },
-                            )
-                            if remove_response.status_code == 200:
-                                st.success("Livro removido dos seus likes!")
-                        except Exception as e:
-                            st.error(f"Erro ao remover like: {e}")
-                        finally:
-                            st.rerun()
+            for idx, like in enumerate(likes):
+                render_feedback_card(like, idx)
         else:
             st.info("📭 Você ainda não curtiu nenhum livro")
 

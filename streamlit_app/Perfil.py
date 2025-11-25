@@ -34,7 +34,7 @@ def main():
             json={"id": user_id},
         )
 
-        genres_options = genre_response.json().get("genres", [])
+        genres_options = genre_response.json().get("categories", [])
         col1, col2 = st.columns(2)
 
         with col1:
