@@ -4,23 +4,19 @@ Route /slate -> returns book recommendations
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.core.rl_runtime import recommender, features, ARM_INDEX
+from app.core import rl_runtime as rl
 import numpy as np
 from app.db import crud, database
 from app.api import schemas
 import random
 import uuid
 
-#
-# Router Setup
-#
 
 router = APIRouter(prefix="/slate", tags=["slate"])
 
 
-#
-# Endpoints
-#
+# ==================== Endpoints ====================
+
 
 
 @router.post("/recommend", response_model=schemas.SlateResponse)
@@ -50,7 +46,6 @@ def get_recommendations(
     try:
         slate_id = str(uuid.uuid4())
 
-
         # recommended_books= _random_approach(db, user_id, n_items)
         recommended_books_ids = _rl_approach(db, user_id, n_items)
         recommended_data = []
@@ -58,7 +53,7 @@ def get_recommendations(
             book = crud.get_book(db, b_idx)
             if book:
                 data = {
-                    "id": b_idx,
+                    "book_id": b_idx,
                     "title": book.title,
                     "description": book.description or "No description available.",
                     "score": book.avg_rating,
@@ -95,14 +90,17 @@ def _rl_approach(db, user_id, n_items):
     contexts = []
     arms = []
 
+    if rl.features or rl.recommender is None:
+        raise RuntimeError("RL trainer not initialized")
+
     for book in candidate_books:
-        ctx = features.get_context(user_id, book.id, db=db) # type: ignore
+        ctx = rl.features.get_context(user_id, book.id, db=db)
         contexts.append(ctx)
         arms.append(book.id)
 
     contexts = np.array(contexts)
 
-    chosen_books_ids = recommender.recommend(
+    chosen_books_ids = rl.recommender.recommend(
         candidate_arms=arms,
         contexts=contexts,
         n_recommendations=n_items

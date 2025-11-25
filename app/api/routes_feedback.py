@@ -8,20 +8,14 @@ from sqlalchemy.orm import Session
 from app.db import crud, models, database
 from app.db.models import ActionType
 from app.api import schemas
-from app.core.rl_runtime import trainer
+from app.core import rl_runtime as rl
 from app.core.context_features import ContextFeatures
-from app.core.rl_runtime import trainer, features, ARM_INDEX
 
-
-#
-# Router Setup
-#
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 
-
 #
-# Auxiliary Functions
+# ==================== Auxiliary Functions ====================
 #
 
 
@@ -31,7 +25,6 @@ def _feedback_type_to_action_type(action_type: schemas.ActionType) -> ActionType
         schemas.ActionType.LIKE: ActionType.LIKE,
         schemas.ActionType.DISLIKE: ActionType.DISLIKE,
         schemas.ActionType.CLEAR: ActionType.CLEAR,
-        schemas.ActionType.IGNORED: ActionType.IGNORED,
     }
     return mapping[action_type]
 
@@ -41,14 +34,13 @@ def _calculate_reward(action_type: schemas.ActionType) -> float:
     rewards = {
         schemas.ActionType.LIKE: 1.0,
         schemas.ActionType.CLEAR: 0.5,
-        schemas.ActionType.IGNORED: 0.3,
-        schemas.ActionType.DISLIKE: 0.0,
+        schemas.ActionType.DISLIKE: -1,
     }
     return rewards[action_type]
 
 
 #
-# Endpoints
+# ==================== Endpoints ====================
 #
 
 
@@ -56,19 +48,18 @@ def _calculate_reward(action_type: schemas.ActionType) -> float:
 def register_feedback(
     feedback: schemas.FeedbackRequest, db: Session = Depends(database.get_db)
 ) -> schemas.FeedbackResponse:
-    """
-    Registra feedback de um usuário sobre um livro.
-
-    Args:
-        feedback: FeedbackRequest com user_id, book_id, action_type, slate_id, pos
+    """    
+    Registers user feedback about a book.    
+    Args:    
+        feedback: FeedbackRequest with user_id, book_id, action_type, slate_id, pos    
+    db: Database session    
+    Returns:    
+        FeedbackResponse confirming registration    
+    Raises:    
+        HTTPException: If user or book does not exist    
         db: Database session
-
-    Returns:
-        FeedbackResponse confirmando o registro
-
-    Raises:
-        HTTPException: Se usuário ou livro não existir
     """
+
 
     user = crud.get_user(db, feedback.user_id)
     if not user:
@@ -85,17 +76,18 @@ def register_feedback(
     # Convert feedback type
     action_type = _feedback_type_to_action_type(feedback.action_type)
 
+    last_event = crud.get_user_last_book_event(db, feedback.user_id, feedback.book_id)
     # Calculate reward based on action type
     reward = _calculate_reward(feedback.action_type)
    
     slate_id = feedback.slate_id or ""
-    pos = feedback.pos or 0
+    pos = feedback.pos or -1
 
     ctx = ContextFeatures().get_context(
         user_id=feedback.user_id, book_id=feedback.book_id, db=db
     )
 
-    arm_index = ARM_INDEX[feedback.book_id]
+    arm_index = rl.ARM_INDEX[feedback.book_id]
 
     try:
         event = crud.create_event(
@@ -108,8 +100,10 @@ def register_feedback(
             reward_w=reward,  # weight-adjusted reward
             ctx_features=feedback.ctx_features,
         )
-        trainer.add_feedback(ctx, arm_index, reward)
-
+        if rl.trainer is None:
+            raise RuntimeError("RL trainer not initialized")
+        rl.trainer.add_feedback(ctx, arm_index, reward)
+            
         return schemas.FeedbackResponse(
             success=True,
             message=f"Feedback '{feedback.action_type.value}' registered successfully",
@@ -211,7 +205,6 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
-    # Count interactions by type
     all_events = crud.get_user_events(db, user_id)
 
     likes_count = 0
