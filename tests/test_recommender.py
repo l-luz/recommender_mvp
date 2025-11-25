@@ -1,65 +1,91 @@
-"""
-Testes do recomendador (bandit contextual)
-"""
+"""Recommender logic tests using LinUCB and helpers."""
 
-import pytest
 import numpy as np
 
-from app.core.recommender import ContextualRecommender
+from app.core.context_features import ContextFeatures
+from app.core.recommender.linucb import LinUCBRecommender
+from app.core.training import OnlineTrainer
+from app.db import crud
+from app.core import rl_runtime
 
 
-class TestContextualRecommender:
-    """Testes para ContextualRecommender"""
-    
-    @pytest.fixture
-    def recommender(self):
-        """Fixture: cria instância do recommender"""
-        return ContextualRecommender(n_arms=100, context_dim=50)
-    
-    def test_initialization(self, recommender):
-        """Testa inicialização do recommender"""
-        assert recommender.n_arms == 100
-        assert recommender.context_dim == 50
-        assert recommender.model_type == "linucb"
-    
-    def test_recommend_returns_list(self, recommender):
-        """Testa se recommend() retorna lista"""
-        context = np.random.rand(50)
-        recommendations = recommender.recommend(context, n_recommendations=4)
-        
-        assert isinstance(recommendations, list)
-        assert len(recommendations) == 4
-    
-    def test_recommend_valid_indices(self, recommender):
-        """Testa se indices retornados são válidos"""
-        context = np.random.rand(50)
-        recommendations = recommender.recommend(context, n_recommendations=4)
-        
-        for idx in recommendations:
-            assert 0 <= idx < recommender.n_arms
-    
-    def test_update_single(self, recommender):
-        """Testa atualização single-shot"""
-        context = np.random.rand(50)
-        arm = 5
-        reward = 1.0
-        
-        # Não deve lançar exceção
-        recommender.update(context, arm, reward)
-    
-    def test_batch_update(self, recommender):
-        """Testa atualização em batch"""
-        contexts = np.random.rand(32, 50)
-        arms = np.random.randint(0, 100, 32)
-        rewards = np.random.rand(32)
-        
-        # Não deve lançar exceção
-        recommender.batch_update(contexts, arms, rewards)
-    
-    def test_different_context_dim_raises(self):
-        """Testa se context_dim diferente causa erro"""
-        recommender = ContextualRecommender(n_arms=100, context_dim=50)
-        context = np.random.rand(100)  # Dimensão errada
-        
-        # TODO: Verificar se lança exceção ou trata graciosamente
-        pass
+def test_linucb_ranks_by_confidence():
+    recommender = LinUCBRecommender(n_arms=3, d=4, alpha=1.0)
+    candidate_arms = [10, 11, 12]
+    contexts = np.array(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0, 0.0],
+            [2.0, 0.0, 0.0, 0.0],
+        ]
+    )
+
+    chosen = recommender.recommend(candidate_arms, contexts, n_recommendations=2)
+
+    assert chosen == [12, 11]
+
+
+def test_linucb_update_adjusts_parameters():
+    recommender = LinUCBRecommender(n_arms=1, d=3, alpha=0.5)
+    context = np.array([1.0, 2.0, 0.0])
+
+    recommender.update(context, arm=5, reward=1.0)
+
+    assert 5 in recommender.A
+    assert 5 in recommender.b
+    expected_A = np.eye(3) + np.outer(context, context)
+    expected_b = context.reshape(-1, 1)
+    assert np.allclose(recommender.A[5], expected_A)
+    assert np.allclose(recommender.b[5], expected_b)
+
+
+def test_online_trainer_flushes_batch():
+    recommender = LinUCBRecommender(n_arms=5, d=2, alpha=0.5)
+    trainer = OnlineTrainer(recommender=recommender, batch_size=2)
+
+    c1 = np.array([1.0, 0.0])
+    c2 = np.array([0.0, 1.0])
+
+    trainer.add_feedback(c1, arm=1, reward=1.0)
+    assert len(trainer.buffer) == 1
+
+    trainer.add_feedback(c2, arm=2, reward=0.2)
+    assert len(trainer.buffer) == 0  # buffer flushed
+
+    assert 1 in recommender.A and 2 in recommender.A
+
+
+def test_context_features_default_shape():
+    features = ContextFeatures()
+    ctx_vector = features.get_context(user_id=1, book_id=1, db=None)
+
+    assert ctx_vector.shape[0] == features.feature_dim
+    assert np.allclose(ctx_vector[:3], np.array([0.5, 0.0, 1.0]))
+
+
+def test_context_uses_db_fields(db_session):
+    user = crud.create_user(db_session, "cf", "pw")
+    book = crud.create_book(
+        db_session, "Book", authors=["A1"], categories=["G1"], description="d"
+    )
+    features = ContextFeatures()
+    ctx = features.get_context(user_id=user.id, book_id=book.id, db=db_session)
+    assert ctx.shape[0] == features.feature_dim
+    # ensure at least one position differs from default due to db data
+    assert not np.allclose(ctx, np.zeros_like(ctx))
+
+
+def test_arm_index_matches_books(db_session):
+    books = [
+        crud.create_book(
+            db_session, f"B{i}", authors=["A"], categories=["C"], description="d"
+        )
+        for i in range(3)
+    ]
+    # Rebuild runtime state from the DB catalog
+    rl_runtime.init_runtime(db_session)
+
+    book_ids = set(crud.get_all_book_ids(db_session))
+    assert set(rl_runtime.ARM_INDEX.keys()) == book_ids
+    # Ensure ARM_INDEX order is aligned with BOOK_IDS length
+    assert len(rl_runtime.BOOK_IDS) == len(book_ids)

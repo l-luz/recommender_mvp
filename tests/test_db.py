@@ -1,115 +1,127 @@
-"""
-Testes do banco de dados
-"""
-
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.db.database import Base
-from app.db import models, crud
+"""Database CRUD helpers tests."""
+from app.db import crud, models
 
 
-@pytest.fixture
-def test_db():
-    """Fixture: cria banco de testes in-memory"""
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    db = TestingSessionLocal()
-    yield db
-    db.close()
+def test_create_and_get_user(db_session):
+    user = crud.create_user(db_session, "bob", "pw123")
+
+    fetched = crud.get_user(db_session, user.id)
+    assert fetched is not None
+    assert fetched.username == "bob"
+    assert fetched.password == "pw123"
 
 
-class TestUserCRUD:
-    """Testes CRUD de usuários"""
-    
-    def test_create_user(self, test_db):
-        """Testa criação de usuário"""
-        user = crud.create_user(test_db, "test_user", "password_hash")
-        
-        assert user.id is not None
-        assert user.username == "test_user"
-    
-    def test_get_user(self, test_db):
-        """Testa recuperação de usuário"""
-        created = crud.create_user(test_db, "test_user", "password_hash")
-        retrieved = crud.get_user(test_db, created.id)
-        
-        assert retrieved.username == "test_user"
-    
-    def test_get_user_by_username(self, test_db):
-        """Testa busca de usuário por username"""
-        created = crud.create_user(test_db, "test_user", "password_hash")
-        retrieved = crud.get_user_by_username(test_db, "test_user")
-        
-        assert retrieved.id == created.id
+def test_update_user_genres(db_session):
+    user = crud.create_user(db_session, "carol", "pw123")
+
+    updated = crud.update_user_genres(db_session, user.id, "fantasy,scifi")
+    assert updated is not None
+    assert updated.preferred_genres == "fantasy,scifi"
+
+    persisted = crud.get_user(db_session, user.id)
+    assert persisted.preferred_genres == "fantasy,scifi"
 
 
-class TestBookCRUD:
-    """Testes CRUD de livros"""
-    
-    def test_create_book(self, test_db):
-        """Testa criação de livro"""
-        book = crud.create_book(
-            test_db,
-            "Test Book",
-            "Test Author",
-            "Fiction",
-            "Test description"
-        )
-        
-        assert book.id is not None
-        assert book.title == "Test Book"
-    
-    def test_get_book(self, test_db):
-        """Testa recuperação de livro"""
-        created = crud.create_book(
-            test_db,
-            "Test Book",
-            "Test Author",
-            "Fiction",
-            "Test description"
-        )
-        retrieved = crud.get_book(test_db, created.id)
-        
-        assert retrieved.title == "Test Book"
-    
-    def test_get_all_books(self, test_db):
-        """Testa listagem de livros"""
-        for i in range(5):
-            crud.create_book(test_db, f"Book {i}", "Author", "Genre", "Desc")
-        
-        books = crud.get_all_books(test_db, limit=100)
-        assert len(books) == 5
+def test_create_book_with_relations(db_session):
+    book = crud.create_book(
+        db_session,
+        "Sample Book",
+        authors=["Author 1", "Author 2"],
+        categories=["Drama", "Mystery"],
+        description="Desc",
+    )
+
+    assert book.id is not None
+    assert len(book.categories_rel) == 2
+    assert len(book.authors_rel) == 2
+    assert set(book.get_categories_list) == {"Drama", "Mystery"}
+    assert set(book.get_authors_list) == {"Author 1", "Author 2"}
 
 
-class TestEventCRUD:
-    """Testes CRUD de eventos"""
-    
-    def test_create_event(self, test_db):
-        """Testa criação de evento"""
-        user = crud.create_user(test_db, "user1", "hash")
-        book = crud.create_book(test_db, "Book", "Author", "Genre", "Desc")
-        
-        event = crud.create_event(
-            test_db,
-            user.id,
-            book.id,
-            "like",
-            reward=1.0
-        )
-        
-        assert event.user_id == user.id
-        assert event.book_id == book.id
-    
-    def test_get_user_events(self, test_db):
-        """Testa recuperação de eventos do usuário"""
-        user = crud.create_user(test_db, "user1", "hash")
-        book = crud.create_book(test_db, "Book", "Author", "Genre", "Desc")
-        
-        crud.create_event(test_db, user.id, book.id, "like", 1.0)
-        crud.create_event(test_db, user.id, book.id, "dislike", 0.0)
-        
-        events = crud.get_user_events(test_db, user.id)
-        assert len(events) == 2
+def test_event_states_and_current_lists(db_session):
+    user = crud.create_user(db_session, "dave", "pw123")
+    like_book = crud.create_book(
+        db_session, "Like Book", authors=["A"], categories=["Fiction"]
+    )
+    dislike_book = crud.create_book(
+        db_session, "Dislike Book", authors=["B"], categories=["Horror"]
+    )
+
+    crud.create_event(
+        db_session,
+        user.id,
+        like_book.id,
+        "slate-1",
+        pos=1,
+        action_type=models.ActionType.LIKE.value,
+    )
+    crud.create_event(
+        db_session,
+        user.id,
+        dislike_book.id,
+        "slate-1",
+        pos=2,
+        action_type=models.ActionType.DISLIKE.value,
+    )
+    crud.create_event(
+        db_session,
+        user.id,
+        like_book.id,
+        "slate-1",
+        pos=1,
+        action_type=models.ActionType.CLEAR.value,
+    )
+
+    states = crud.get_user_book_states(db_session, user.id)
+    assert states[like_book.id] == models.ActionType.CLEAR
+    assert states[dislike_book.id] == models.ActionType.DISLIKE
+
+    liked_now = crud.get_user_liked_books_current(db_session, user.id)
+    assert [book.id for book in liked_now] == []
+
+    disliked_now = crud.get_user_disliked_books_current(db_session, user.id)
+    assert [book.id for book in disliked_now] == [dislike_book.id]
+
+
+def test_available_books_excludes_feedback(db_session):
+    user = crud.create_user(db_session, "eve", "pw123")
+    fresh_book = crud.create_book(db_session, "Fresh", authors=["AA"], categories=["X"])
+    liked_book = crud.create_book(db_session, "Liked", authors=["BB"], categories=["Y"])
+
+    crud.create_event(
+        db_session,
+        user.id,
+        liked_book.id,
+        "slate-2",
+        pos=1,
+        action_type=models.ActionType.LIKE.value,
+    )
+    available = crud.get_user_available_books(db_session, user.id)
+    available_ids = {book.id for book in available}
+
+    assert fresh_book.id in available_ids
+    assert liked_book.id not in available_ids
+
+
+def test_get_user_by_username(db_session):
+    crud.create_user(db_session, "alice", "pw")
+    user = crud.get_user_by_username(db_session, "alice")
+    assert user and user.username == "alice"
+
+
+def test_create_event_with_ctx_features(db_session):
+    user = crud.create_user(db_session, "ctx", "pw")
+    book = crud.create_book(
+        db_session, "B", authors=["A"], categories=["C"], description="d"
+    )
+    evt = crud.create_event(
+        db_session,
+        user.id,
+        book.id,
+        "s",
+        pos=0,
+        action_type=models.ActionType.LIKE.value,
+        reward_w=1.0,
+        ctx_features="[0.1, 0.2]",
+    )
+    assert evt.ctx_features == "[0.1, 0.2]"

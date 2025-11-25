@@ -9,3 +9,4 @@ mabwiser
 contextualbandits
 pytest
 python-multipart
+httpx
