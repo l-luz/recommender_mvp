@@ -23,3 +23,4 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = None
     st.session_state.username = None
     st.session_state.token = None
+    st.session_state.slate = None

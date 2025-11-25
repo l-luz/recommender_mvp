@@ -56,7 +56,8 @@ def main():
                                 st.success("Livro removido dos seus dislikes!")
                         except Exception as e:
                             st.error(f"Erro ao remover dislike: {e}")
-                        st.rerun()
+                        finally:
+                            st.rerun()
         else:
             st.info("✅ Você não marcou nenhum livro como dislike ainda")
     

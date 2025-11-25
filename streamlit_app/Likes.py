@@ -35,7 +35,6 @@ def main():
                 col1, col2, col3= st.columns([2, 4, 1])
                 with col1:
                     image = like.get("image", None)
-                    print(type(image))
                     if image and image != "N/A":
                         st.image(image=image, width=100)
                 with col2:
@@ -56,7 +55,8 @@ def main():
                                 st.success("Livro removido dos seus likes!")
                         except Exception as e:
                             st.error(f"Erro ao remover like: {e}")
-                        st.rerun()
+                        finally:
+                            st.rerun()
         else:
             st.info("📭 Você ainda não curtiu nenhum livro")
     

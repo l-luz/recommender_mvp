@@ -7,6 +7,24 @@ from typing import Dict
 from app.utils.config import STREAMLIT_CONFIG
 import requests
 
+def send_feedback(book_id, slate_id, pos, action):
+    try:
+        requests.post(
+            f"{STREAMLIT_CONFIG['api_url']}/feedback/register",
+            json={
+                "user_id": st.session_state.user_id,
+                "book_id": book_id,
+                "slate_id": slate_id,
+                "pos": pos,
+                "action_type": action,
+            },
+            timeout=5,
+        ).raise_for_status()
+        if "slate" in st.session_state:
+            del st.session_state["slate"]
+
+    except Exception as e:
+        st.error(f"Erro ao enviar feedback: {e}")
 
 def render_book_card(book: Dict, idx: int, slate_idx: int):
     """
@@ -42,39 +60,9 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
             st.write(f"Rating: ⭐ {book.get('rating', 0)}/5")
 
         foot1, foot2 = st.columns(2)
-
+        book_id = book.get("book_id")
         with foot1:
-            if st.button(f"👍 Like", key=f"like_{idx}"):
-                try:
-                    response = requests.post(
-                        f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
-                        json={
-                            "user_id": user_id,
-                            "book_id": book.get("id"),
-                            "slate_id": slate_idx,
-                            "action_type": "like",
-                            "pos": idx,
-                        },
-                    )
-                    if response.status_code != 200:
-                        raise Exception(f"{response}")
-                except Exception as e:
-                    st.error(f"Erro ao enviar feedback: {e}")
+            st.button("👍 Like", key=f"like-{idx}", on_click=send_feedback, args=(book_id, slate_idx, idx, "like"))
 
         with foot2:
-            if st.button(f"👎 Dislike", key=f"dislike_{idx}"):
-                try:
-                    response = requests.post(
-                        f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
-                        json={
-                            "user_id": user_id,
-                            "book_id": book.get("id"),
-                            "slate_id": slate_idx,
-                            "action_type": "dislike",
-                            "pos": idx,
-                        },
-                    )
-                    if response.status_code != 200:
-                        raise Exception(f"{response}")
-                except Exception as e:
-                    st.error(f"Erro ao enviar feedback: {e}")
+            st.button("👎 Dislike", key=f"dislike-{idx}", on_click=send_feedback, args=(book_id, slate_idx, idx, "dislike"))
