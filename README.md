@@ -2,44 +2,36 @@
 
 > **MVP de recomendação de livros com aprendizado por reforço contextual**
 
-## 📋 Visão Geral
+MVP de recomendação de livros usando bandido contextual (LinUCB), com backend FastAPI e frontend Streamlit. Banco local em SQLite via SQLAlchemy e notebooks para análises offline.
 
-Sistema de recomendação de livros utilizando:
-- **FastAPI** para backend
-- **Streamlit** para frontend
-- **SQLite + SQLAlchemy** para persistência
-- **MABWiser** para aprendizado por reforço contextual (LinUCB)
-- **pandas + scikit-learn** para processamento de dados
+## Visão Geral
+- Backend: FastAPI com endpoints para recomendações e feedback.
+- Frontend: Streamlit para login, navegação e interação com recomendações.
+- Modelo: LinUCB com features de contexto (usuário + item) e atualização online em mini-batches.
+- Persistência: SQLite em `data/database.db`.
+- Notebooks: experimentos de extração de dados, features e testes de exploração.
 
-## 🏗️ Estrutura do Projeto
-
-```
+## Estrutura do Projeto
 recommender_mvp/
-├── app/                    # Backend FastAPI
-│   ├── api/               # Rotas da API
-│   ├── core/              # Lógica de recomendação (MABWiser)
-│   ├── db/                # Modelos e CRUD SQLAlchemy
-│   ├── utils/             # Configurações, logging, seeds
-│   └── main.py            # Entry point FastAPI
-├── streamlit_app/         # Frontend Streamlit
-│   ├── Login.py           # Autenticação
-│   ├── Home_Slate.py      # Recomendações
-│   ├── Likes.py           # Histórico de likes
-│   ├── Dislikes.py        # Histórico de dislikes
-│   ├── Perfil.py          # Perfil do usuário
-│   ├── Logout.py          # Desconexão
-│   └── components/        # Componentes reutilizáveis
-├── data/                  # Dados (raw, processed, embeddings)
-├── tests/                 # Testes (pytest)
-├── notebooks/             # Análise offline (Jupyter)
-├── run.py                 # Script para iniciar tudo
-├── requirements.txt       # Dependências
-├── .gitignore            # Git ignore
-└── README.md             # Este arquivo
-```
+├── app/ # Backend FastAPI
+│ ├── api/ # Rotas e schemas
+│ ├── core/ # Recomendador (LinUCB), features, runtime
+│ ├── db/ # Models, CRUD, conexão
+│ └── utils/ # Configurações e utilidades
+├── streamlit_app/ # Frontend Streamlit
+├── data/ # Banco SQLite e artefatos
+├── notebooks/ # Análises Jupyter
+├── tests/ # Testes pytest
+├── run.py # Sobe API + Streamlit
+└── requirements.txt
 
-## 🚀 Como Executar
 
+## Pré-requisitos
+- Python 3.10+
+- SQLite
+- (Opcional) virtualenv/venv
+
+## Setup Rápido
 ### 1. Configurar Ambiente
 
 ```bash
@@ -71,67 +63,24 @@ streamlit run streamlit_app/Login.py
 ```
 
 ### 3. Acessar Aplicação
+Streamlit: http://localhost:8501
+FastAPI: http://127.0.0.1:8000
+Docs Swagger: http://127.0.0.1:8000/docs
 
-- **Frontend Streamlit**: http://localhost:8501
-- **Backend FastAPI**: http://127.0.0.1:8000
-- **API Docs**: http://127.0.0.1:8000/docs
+## Configuração
+> **Edite app/utils/config.py para ajustar:**
+- Caminhos de dados (DATA_DIR, DATABASE_PATH)
+- Hiperparâmetros do LinUCB (alpha, feature_dim, batch_size)
+- Parâmetros de API/Streamlit (host, port, api_url, max_recommendations)
 
-## 🧪 Testes
+## Notebooks
+- **data_extraction.ipynb:** extração/visualização de dados.
+- **build_item_features.ipynb:** construção de features de itens.
+- **exploration_tests.ipynb:** simulações de exploração (LinUCB vs random).
 
-```bash
-# Executar todos os testes
+## Testes
+```batch
 pytest
-
-# Com coverage
+# ou com cobertura
 pytest --cov=app
-
-# Teste específico
-pytest tests/test_api.py -v
 ```
-
-## 📊 Fluxo de Uso
-
-1. **Login**: Usuário faz login/registro
-2. **Slate**: Recebe 3-4 recomendações personalizadas
-3. **Feedback**: Marca como like/dislike
-4. **Modelo Atualiza**: Feedback é registrado e modelo se atualiza online
-5. **Próximas Recomendações**: Baseadas em novo conhecimento
-
-## 🤖 Algoritmo de Recomendação
-
-- **Modelo**: LinUCB (Linear Upper Confidence Bound)
-- **Contexto**: Features de usuário + features de item
-- **Aprendizado**: Online com mini-batches
-- **Exploração**: Balanceada com parâmetro alpha
-
-## 🛠️ Desenvolvimento
-
-### Direções Futuras
-
-- [ ] Autenticação JWT
-- [ ] Cache de recomendações
-- [ ] Análise de A/B testing
-- [ ] Dashboard de métricas
-- [ ] Suporte a múltiplos modelos
-- [ ] Deploy em cloud (Azure/AWS)
-
-## 📚 Dependências Principais
-
-- `fastapi` - Framework web
-- `streamlit` - UI interativa
-- `sqlalchemy` - ORM
-- `mabwiser` - Bandit algoritmos
-- `scikit-learn` - ML utilities
-- `pytest` - Testes
-- `pandas` - Processamento de dados
-
-## 📝 Notas
-
-- Banco de dados: SQLite (arquivo `data/database.db`)
-- Embeddings: TF-IDF ou Sentence-Transformers (placeholder)
-- Logs: `logs/app_*.log`
-- Sessão: Streamlit session_state
-
-## 📄 Licença
-
-MVP educacional para demonstração de recomendação contextual.
