@@ -35,57 +35,52 @@ def main():
         )
 
         genres_options = genre_response.json().get("categories", [])
-        col1, col2 = st.columns(2)
 
-        with col1:
-            st.write("**Informações do Perfil:**")
-            st.write(f"ID: {user_id}")
-            st.write(f"Username: {username}")
+        st.write("**Gêneros Preferidos:**")
 
-        with col2:
-            st.write("**Gêneros Preferidos:**")
+        user_genres = user_response.json().get("preferred_genres") or []
 
-            user_genres = user_response.json().get("preferred_genres") or []
+        with st.form("preferences_form"):
+            selected_genres = st.multiselect(
+                "Selecione seus gêneros preferidos:",
+                options=genres_options,
+                default=user_genres,
+            )
 
-            with st.form("preferences_form"):
-                selected_genres = st.multiselect(
-                    "Selecione seus gêneros preferidos:",
-                    options=genres_options,
-                    default=user_genres,
-                )
+            submitted = st.form_submit_button("Salvar Preferências")
 
-                submitted = st.form_submit_button("Salvar Preferências")
-
-                if submitted:
-                    try:
-                        update_response = requests.put(
-                            f"{STREAMLIT_CONFIG["api_url"]}/users/profile/{user_id}",
-                            json={
-                                "id": user_id,
-                                "username": username,
-                                "preferred_genres": selected_genres,
-                            },
-                        )
-                        if update_response.status_code == 200:
-                            st.success("✅ Preferências atualizadas!")
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar preferências: {e}")
+            if submitted:
+                try:
+                    update_response = requests.put(
+                        f"{STREAMLIT_CONFIG["api_url"]}/users/profile/{user_id}",
+                        json={
+                            "id": user_id,
+                            "username": username,
+                            "preferred_genres": selected_genres,
+                        },
+                    )
+                    if update_response.status_code == 200:
+                        st.success("✅ Preferências atualizadas!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar preferências: {e}")
 
         st.divider()
 
-        # # Estatísticas
-        # st.subheader("📊 Suas Estatísticas")
-        # col1, col2, col3 = st.columns(3)
+        # Estatísticas
+        st.subheader("📊 Suas Estatísticas")
+        col1, col2, col3 = st.columns(3)
+        likes = user_response.json().get("likes", 0)
+        dislikes = user_response.json().get("dislikes", 0)
+        unique_interactions = user_response.json().get("unique_books_interacted", 0)
+        with col1:
+            st.metric("Likes", likes)
 
-        # with col1:
-        #     st.metric("Likes", 0)  # TODO: Contar likes
+        with col2:
+            st.metric("Dislikes", dislikes)
 
-        # with col2:
-        #     st.metric("Dislikes", 0)  # TODO: Contar dislikes
-
-        # with col3:
-        #     st.metric("Livros Explorados", 0)  # TODO: Contar eventos
+        with col3:
+            st.metric("Livros Explorados", unique_interactions)
 
     except Exception as e:
         st.error(f"Erro ao carregar perfil: {e}")

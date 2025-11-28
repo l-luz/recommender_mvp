@@ -90,7 +90,7 @@ def login_user(
     )
 
 
-@router.get("/profile/{user_id}", response_model=schemas.UserBase)
+@router.get("/profile/{user_id}", response_model=schemas.HistorySummary)
 def get_profile(user_id: int, db: Session = Depends(database.get_db)) -> dict:
     """
     Returns user profile.
@@ -109,12 +109,25 @@ def get_profile(user_id: int, db: Session = Depends(database.get_db)) -> dict:
     genres_list = []
     if user.preferred_genres:  # type: ignore
         genres_list = user.preferred_genres.split(",")
+    likes = crud.count_user_events(db, user.id, schemas.ActionType.LIKE)  # type: ignore
+    dislikes = crud.count_user_events(db, user.id, schemas.ActionType.DISLIKE)  # type: ignore
+    cleaneds = crud.count_user_events(db, user.id, schemas.ActionType.CLEAR)  # type: ignore
 
-    return {
-        "id": user.id,
-        "username": user.username,
-        "preferred_genres": genres_list,
-    }
+    try:
+        return {
+            "id": user.id,
+            "username": user.username,
+            "preferred_genres": genres_list,
+            "total_events": likes + dislikes + cleaneds,
+            "likes": likes,
+            "dislikes": dislikes,
+            "unique_books_interacted": crud.count_user_unique_book_events(db, user_id),
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving categoriessssssssssss: {str(e)}"
+        )
 
 
 @router.put("/profile/{user_id}", response_model=schemas.FeedbackResponse)

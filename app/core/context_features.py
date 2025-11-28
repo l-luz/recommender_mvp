@@ -75,8 +75,8 @@ class ContextFeatures:
         cfg = _load_item_config()
 
         self.top_category_ids: List[int] = cfg["top_categories_ids"]
-        self.top_author_ids: List[int] = cfg["top_authors_ids"] # TODO: check if is empty
-        self.top_publishers: List[str] = cfg["top_publishers"] # TODO: check if is empty
+        self.top_author_ids: List[int] = cfg["top_authors_ids"]
+        self.top_publishers: List[str] = cfg["top_publishers"]
 
         # maps id -> index (for multi-hot)
         self.cat_index = {cid: i for i, cid in enumerate(self.top_category_ids)}

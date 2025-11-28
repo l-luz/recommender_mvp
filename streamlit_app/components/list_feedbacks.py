@@ -10,7 +10,14 @@ from app.utils.config import STREAMLIT_CONFIG
 
 st.set_page_config(page_title="Meus Likes", layout="wide")
 
+
 def _remove_feedback(book_id):
+    """
+    Removes previously sent feedback for a specific book.
+
+    Args:
+        book_id: The unique identifier of the book
+    """
     try:
         remove_response = requests.post(
             f"{STREAMLIT_CONFIG["api_url"]}/feedback/register",
@@ -24,10 +31,9 @@ def _remove_feedback(book_id):
             st.success("Feedback removido!")
     except Exception as e:
         st.error(f"Erro ao remover feedback: {e}")
-    # finally:
-    #     st.rerun()
 
-def render_feedback_card(book: Dict, idx: int) :
+
+def render_feedback_card(book: Dict, idx: int):
     """
     Renders a feedback card in Streamlit.
 
@@ -41,16 +47,12 @@ def render_feedback_card(book: Dict, idx: int) :
         if image and image != "N/A":
             st.image(image=image, width=100)
     with col2:
-        st.write(
-            f"**{book.get('title', 'N/A')}** - {book.get('authors', 'N/A')}"
-        )
+        st.write(f"**{book.get('title', 'N/A')}** - {book.get('authors', 'N/A')}")
         st.write(
             f"**{book.get('categories', 'N/A')}** - {book.get('avg_rating', 'N/A')}"
         )
         with st.expander("Description"):
-            st.write(
-                f"**{book.get('description', 'N/A')}**"
-            )
+            st.write(f"**{book.get('description', 'N/A')}**")
 
     with col3:
         book_id = book.get("id")

@@ -70,8 +70,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    password = Column(String)  # Password hash
-    preferred_genres = Column(Text, nullable=True)  # comma-separated
+    password = Column(Text)  # Password hash
+    preferred_genres = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.now(UTC))
 
     # Relationship
@@ -81,7 +81,6 @@ class User(Base):
     def get_genre_list(self):
         return self._get_list_field("preferred_genres")
 
-    # TODO: global?
     def _get_list_field(self, column_name: str) -> List[str]:
         """
         Returns the field value as a list.
@@ -130,7 +129,7 @@ class Book(Base):
 
     # One to Many relationship
     events = relationship("Event", back_populates="book", cascade="all, delete-orphan")
-    
+
     @property
     def get_image(self) -> Optional[str]:
         """

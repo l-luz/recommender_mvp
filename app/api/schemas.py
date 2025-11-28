@@ -76,30 +76,6 @@ class BookList(BaseModel):
     books: list[BookDetail]
 
 
-# ==================== Event/History Schemas ====================
-
-
-class EventBase(BaseModel):
-    """Base event info"""
-
-    id: int
-    user_id: int
-    book_id: int
-    action_type: str
-    reward: Optional[float] = None
-    timestamp: datetime
-
-
-class HistorySummary(BaseModel):
-    """User history summary"""
-
-    user_id: int
-    total_events: int
-    likes: int
-    dislikes: int
-    unique_books_interacted: int
-
-
 #
 # ==================== User Schemas ====================
 #
@@ -116,6 +92,29 @@ class UserBase(BaseModel):
     id: int
     username: str
     preferred_genres: Optional[List[str]] = None
+
+
+# ==================== Event/History Schemas ====================
+
+
+class EventBase(BaseModel):
+    """Base event info"""
+
+    id: int
+    user_id: int
+    book_id: int
+    action_type: str
+    reward: Optional[float] = None
+    timestamp: datetime
+
+
+class HistorySummary(UserBase):
+    """User history summary"""
+
+    total_events: int
+    likes: int
+    dislikes: int
+    unique_books_interacted: int
 
 
 #

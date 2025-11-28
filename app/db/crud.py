@@ -405,6 +405,40 @@ def get_user_liked_books(db: Session, user_id: int) -> List[models.Book]:
     return books
 
 
+def count_user_events(db: Session, user_id: int, event: str) -> int:
+    """
+    Counts of the user like events.
+    """
+
+    return (
+        db.query(models.Event)
+        .filter(
+            models.Event.user_id == user_id,
+            models.Event.action_type == event,
+        )
+        .count()
+    )
+
+
+def count_user_unique_book_events(db: Session, user_id: int) -> int:
+    """
+    Counts the user unique books interacted.
+    """
+    events = (
+        db.query(models.Event)
+        .filter(
+            models.Event.user_id == user_id,
+        )
+        .all()
+    )
+
+    books = set()
+    for event in events:
+        books.add(event.book_id)  # type: ignore
+
+    return len(books)
+
+
 def get_user_disliked_books(db: Session, user_id: int) -> List[models.Book]:
     """List all books disliked by a user"""
     disliked_events = (
