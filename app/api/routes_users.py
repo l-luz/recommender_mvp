@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db import crud, database
 from app.api import schemas
-
+import bcrypt
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -39,8 +39,12 @@ def register_user(
         )
 
     try:
+        password_bytes = user_data.password.encode("utf-8")
+        hashed_bytes = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+        hashed_string = hashed_bytes.decode("utf-8")
+
         user = crud.create_user(
-            db=db, username=user_data.username, password=user_data.password
+            db=db, username=user_data.username, password=hashed_string
         )
 
         return schemas.FeedbackResponse(
@@ -74,8 +78,9 @@ def login_user(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    # TODO: use hashing bcrypt
-    if user.password != credentials.password:  # type: ignore
+    password_bytes = credentials.password.encode("utf-8")
+
+    if not bcrypt.checkpw(password_bytes, user.password.encode()):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     return schemas.FeedbackResponse(

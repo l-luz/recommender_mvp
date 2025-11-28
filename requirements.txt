@@ -10,3 +10,4 @@ contextualbandits
 pytest
 python-multipart
 httpx
+bcrypt
