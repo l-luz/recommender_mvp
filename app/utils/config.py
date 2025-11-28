@@ -23,7 +23,7 @@ RECOMMENDER_CONFIG = {
     "n_arms": 10000,  # Maximum number of books
     "feature_dim": 10,  # Feature dimensionality
     "model_type": "linucb",
-    "alpha": 1.0,  # LinUCB exploration parameter
+    "alpha": 0.5,  # LinUCB exploration parameter
     "batch_size": 32,  # Mini-batch actions size for update
     "item_config": EMBEDDINGS_DIR / "item_config.json",
 }
