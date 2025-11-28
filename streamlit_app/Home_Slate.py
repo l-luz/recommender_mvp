@@ -31,6 +31,7 @@ st.markdown(
 
 
 def fetch_slate(user_id):
+    
     resp = requests.post(
         f"{STREAMLIT_CONFIG['api_url']}/slate/recommend",
         params={"user_id": user_id, "n_items": STREAMLIT_CONFIG["max_recommendations"]},

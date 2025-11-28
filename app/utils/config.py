@@ -20,8 +20,8 @@ for directory in [DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, EMBEDDINGS_DIR]:
 
 # Template settings
 RECOMMENDER_CONFIG = {
-    "n_arms": 100,  # Maximum number of books
-    "feature_dim": 6,  # Feature dimensionality
+    "n_arms": 10000,  # Maximum number of books
+    "feature_dim": 10,  # Feature dimensionality
     "model_type": "linucb",
     "alpha": 1.0,  # LinUCB exploration parameter
     "batch_size": 32,  # Mini-batch actions size for update

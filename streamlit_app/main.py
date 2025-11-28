@@ -24,7 +24,7 @@ def logout():
 
 
 user_pages = [
-    st.Page("Home_Slate.py"),
+    st.Page("Home_Slate.py", title="Home"),
     st.Page("Likes.py"),
     st.Page("Dislikes.py"),
     st.Page("Perfil.py"),

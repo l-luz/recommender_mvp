@@ -9,7 +9,6 @@ from sqlalchemy import desc, func
 
 from . import models
 
-
 # ==================== USER ====================
 
 
@@ -113,21 +112,21 @@ def get_category(db: Session, category_id: int) -> Optional[models.Category]:
 
 
 def get_all_categories(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, skip: int = 0, limit: Optional[int] = None
 ) -> List[models.Category]:
     """List all categories"""
     return db.query(models.Category).offset(skip).limit(limit).all()
 
 
 def get_distinct_categories(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, skip: int = 0, limit: Optional[int] = None
 ) -> List[models.Category]:
     """List distinct categories"""
     return db.query(models.Category).offset(skip).limit(limit).distinct().all()
 
 
 def get_categories_frequency(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, skip: int = 0, limit: Optional[int] = None
 ) -> List[Tuple[models.Category, int]]:
     """List categories frequency"""
 
@@ -150,14 +149,14 @@ def get_categories_frequency(
 
 
 def get_all_authors(
-    db: Session, skip: int = 0, limit: int = 100
+    db: Session, skip: int = 0, limit: Optional[int] = None
 ) -> List[models.Author]:
     """List all authors"""
     return db.query(models.Author).offset(skip).limit(limit).all()
 
 
 def get_author_books_ids(
-    db: Session, author_id: int, skip: int = 0, limit: int = 100
+    db: Session, author_id: int, skip: int = 0, limit: Optional[int] = None
 ) -> List[int]:
     """List all authors"""
     return (
@@ -180,7 +179,7 @@ def get_or_create_author(db: Session, name: str) -> models.Author:
     return author
 
 
-def get_authors_frequency(db: Session, skip: int = 0, limit: int = 100):
+def get_authors_frequency(db: Session, skip: int = 0, limit: Optional[int] = None):
     total_books_expr = func.count(models.book_authors.c.book_id).label("total_books")
 
     results = (
@@ -195,7 +194,7 @@ def get_authors_frequency(db: Session, skip: int = 0, limit: int = 100):
     return [tuple(row) for row in results]
 
 
-def get_publisher_frequency(db: Session, skip: int = 0, limit: int = 100):
+def get_publisher_frequency(db: Session, skip: int = 0, limit: Optional[int] = None):
     total_books_expr = func.count().label("total_books")  # Conta as linhas
 
     results = (
@@ -283,12 +282,12 @@ def get_book(db: Session, book_id: int) -> Optional[models.Book]:
     return db.query(models.Book).filter(models.Book.id == book_id).first()
 
 
-def get_all_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]:
+def get_all_books(db: Session, skip: int = 0, limit: Optional[int] = None) -> List[models.Book]:
     """List all books"""
     return db.query(models.Book).offset(skip).limit(limit).all()
 
 
-def get_all_book_ids(db: Session, skip: int = 0, limit: int = 100) -> List[int]:
+def get_all_book_ids(db: Session, skip: int = 0, limit: Optional[int] = None) -> List[int]:
     books = (
         db.query(models.Book)
         .options(load_only(models.Book.id))  # type: ignore
@@ -299,7 +298,7 @@ def get_all_book_ids(db: Session, skip: int = 0, limit: int = 100) -> List[int]:
 
 
 def get_book_authors_ids(
-    db: Session, book_id: int, skip: int = 0, limit: int = 100
+    db: Session, book_id: int, skip: int = 0, limit: Optional[int] = None
 ) -> List[int]:
     """List all authors"""
     return (
@@ -474,6 +473,7 @@ def get_user_last_book_event(
 
 def get_user_latest_interactions(
     db: Session, user_id: int, limit: int = 100, skip: int = 0
+    db: Session, user_id: int, limit: Optional[int] = None, skip: int = 0
 ):
     """Get user latest interactions"""
     return (
@@ -496,7 +496,7 @@ def get_user_latest_interactions(
 
 
 def get_user_available_books(
-    db: Session, user_id: int, limit: int = 100, skip: int = 0
+    db: Session, user_id: int, limit: Optional[int] = None, skip: int = 0
 ):
     """Get user available books for interaction"""
     liked_books = get_user_liked_books_current(db, user_id)

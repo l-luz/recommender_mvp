@@ -24,40 +24,44 @@ def main():
 
         submitted = st.form_submit_button("Entrar")
 
-    if submitted:
-        if not username or not password:
-            st.error("❌ Preencha usuário e senha!")
-            return
+        if submitted:
+            if not username or not password:
+                st.error("❌ Preencha usuário e senha!")
+                return
 
-        try:
-            response = requests.post(
-                f"{STREAMLIT_CONFIG["api_url"]}/users/login",
-                json={"username": username, "password": password},
-            )
+            try:
+                response = requests.post(
+                    f"{STREAMLIT_CONFIG["api_url"]}/users/login",
+                    json={"username": username, "password": password},
+                )
 
-            if response.status_code == 200:
-                data = response.json()
-                st.session_state.user_id = data.get("event_id")
-                st.session_state.username = username
-                st.session_state.token = data.get("token")
-                st.success(f"✅ Bem-vindo, {username}!")
+                if response.status_code == 200:
+                    data = response.json()
+                    st.session_state.user_id = data.get("event_id")
+                    st.session_state.username = username
+                    st.session_state.token = data.get("token")
+                    st.success(f"✅ Bem-vindo, {username}!")
 
-                # Redirecionar
-                import time
+                    # Redirecionar
+                    import time
 
-                time.sleep(1)
-                st.switch_page("Home_Slate.py")
-            else:
-                st.error("❌ Usuário ou senha incorretos")
+                    time.sleep(1)
+                    st.switch_page("Home_Slate.py")
+                else:
+                    st.error("❌ Usuário ou senha incorretos")
 
-        except Exception as e:
-            st.error(f"❌ Erro ao conectar: {e}")
+            except Exception as e:
+                st.error(f"❌ Erro ao conectar: {e}")
 
     # Link para registrar
     st.markdown("---")
+    if "show_register" not in st.session_state:
+        st.session_state.show_register = False
 
-    st.write("Não tem conta? Crie uma agora!")
-    with st.link_button("Não tem conta? Crie uma agora!", "#"):
+    if st.button("Não tem conta? Crie uma agora!", type="tertiary"):
+        st.session_state.show_register = True
+
+    if st.session_state.show_register:
         with st.form("register_form"):
             new_username = st.text_input(
                 "Novo usuário",
@@ -82,28 +86,28 @@ def main():
         if register_submitted:
             if not new_username or not new_password:
                 st.error("❌ Preencha todos os campos!")
-                return
 
-            if new_password != confirm_password:
+            elif new_password != confirm_password:
                 st.error("❌ Senhas não conferem!")
-                return
-
-            try:
-                response = requests.post(
-                    f"{STREAMLIT_CONFIG["api_url"]}/users/register",
-                    json={"username": new_username, "password": new_password},
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    st.success(
-                        f"✅ Usuário '{new_username}' registrado com sucesso! Faça login."
+            else:
+                try:
+                    response = requests.post(
+                        f"{STREAMLIT_CONFIG["api_url"]}/users/register",
+                        json={"username": new_username, "password": new_password},
                     )
-                else:
-                    error_msg = response.json().get("detail", "Erro desconhecido")
-                    st.error(f"❌ Erro ao registrar: {error_msg}")
-            except Exception as e:
-                st.error(f"❌ Erro ao conectar: {e}")
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        st.session_state.show_register = False
+                        st.success(
+                            f"✅ Usuário '{new_username}' registrado com sucesso! Faça login."
+                        )
+
+                    else:
+                        error_msg = response.json().get("detail", "Erro desconhecido")
+                        st.error(f"❌ Erro ao registrar: {error_msg}")
+                except Exception as e:
+                    st.error(f"❌ Erro ao conectar: {e}")
 
 
 if __name__ == "__main__":
