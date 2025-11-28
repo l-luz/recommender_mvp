@@ -27,17 +27,19 @@ class LinUCBRecommender(BaseRecommender):
         """
         self.d = d  # dimension
         self.alpha = alpha  # exploration factor
+        
         # Key: BookID (int), Value: Matrix/Vector
-        self.A: Dict[int, np.ndarray] = {}  # context covariance
+        self.A_inv: Dict[int, np.ndarray] = {}  # Inverse of context covariance
         self.b: Dict[int, np.ndarray] = {}  # context-reward relationship
 
     def _init_arm(self, arm_id: int):
         """
         Lazy initialization: if we haven't seen this book ID before,
-        create its A and b matrices.
+        create its A_inv and b matrices.
         """
-        if arm_id not in self.A:
-            self.A[arm_id] = np.eye(self.d)
+        if arm_id not in self.A_inv:
+            # Initialize A_inv as Identity (since A=I, A^-1=I)
+            self.A_inv[arm_id] = np.eye(self.d)
             self.b[arm_id] = np.zeros((self.d, 1))
 
     def recommend(
@@ -61,16 +63,16 @@ class LinUCBRecommender(BaseRecommender):
             self._init_arm(arm)
             x = x.reshape(-1, 1)
 
-            # Inversion of A (Ridge Regression covariance)
-            A_inv = np.linalg.inv(
-                self.A[arm]
-            )  # TODO: if it takes too long, the problem is probably here. Use Sherman-Morrison?
+            A_inv = self.A_inv[arm]
 
             theta = A_inv @ self.b[arm]  # Coefficient estimates
 
             # UCB Score Calculation
             mean = theta.T @ x  # Mean prediction (exploitation)
-            var = np.sqrt(x.T @ A_inv @ x)  # Confidence interval (exploration)
+            
+            # Variance calculation (exploration term)
+            var = np.sqrt(x.T @ A_inv @ x)
+            
             p = (mean + self.alpha * var).item()
             scores.append(p)
 
@@ -87,16 +89,23 @@ class LinUCBRecommender(BaseRecommender):
         """
         Updates the model parameters for a specific arm using the observed feedback.
 
-        This performs an online update of the covariance matrix A and the reward vector b
-        (Ridge Regression update).
+        This performs an online update of the inverse covariance matrix A_inv 
+        using the Sherman-Morrison formula and updates vector b.
 
         Args:
             context: The context vector associated with the chosen arm (shape: [d]).
             arm: The index of the arm that was executed.
-            reward: The reward value observing from the environment (e.g., 1.0 for click, 0.0 for ignore).
+            reward: The reward value observing from the environment.
         """
         self._init_arm(arm)
-        # TODO: Sherman-Morrison ?
         x = context.reshape(-1, 1)
-        self.A[arm] += x @ x.T
+        
         self.b[arm] += reward * x
+        
+        A_inv_old = self.A_inv[arm]
+        
+        numerator = (A_inv_old @ x) @ (x.T @ A_inv_old)
+        
+        denominator = 1.0 + (x.T @ A_inv_old @ x).item()
+        
+        self.A_inv[arm] = A_inv_old - (numerator / denominator)
