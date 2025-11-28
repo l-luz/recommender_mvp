@@ -472,7 +472,6 @@ def get_user_last_book_event(
 
 
 def get_user_latest_interactions(
-    db: Session, user_id: int, limit: int = 100, skip: int = 0
     db: Session, user_id: int, limit: Optional[int] = None, skip: int = 0
 ):
     """Get user latest interactions"""
