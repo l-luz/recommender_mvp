@@ -4,6 +4,8 @@ Online model update (mini-batchs)
 
 from typing import List, Tuple
 import numpy as np
+
+from app.utils.config import RECOMMENDER_CONFIG
 from .context_features import ContextFeatures
 
 
@@ -51,3 +53,10 @@ class OnlineTrainer:
 
         self.recommender.batch_update(contexts, arms, rewards)
         self.buffer.clear()
+
+        model_path = RECOMMENDER_CONFIG["model_path"]
+        if model_path and hasattr(self.recommender, "save_state"):
+            try:
+                self.recommender.save_state(model_path)
+            except Exception as e:
+                print(f"[WARN] Falha ao salvar estado LinUCB: {e}")

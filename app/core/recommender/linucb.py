@@ -5,6 +5,8 @@ Contextual Bandit Logic (LinUCB)
 import numpy as np
 from .base import BaseRecommender
 from typing import Dict, List
+import json
+import os
 
 
 class LinUCBRecommender(BaseRecommender):
@@ -15,7 +17,7 @@ class LinUCBRecommender(BaseRecommender):
     to calculate an upper confidence bound for the expected reward.
     """
 
-    def __init__(self, n_arms: int, d: int, alpha: float = 1.0):
+    def __init__(self, n_arms: int, d: int, alpha: float = 1.0) -> None:
         """
         Initializes the LinUCB recommender with identity matrices.
 
@@ -27,12 +29,12 @@ class LinUCBRecommender(BaseRecommender):
         """
         self.d = d  # dimension
         self.alpha = alpha  # exploration factor
-        
+
         # Key: BookID (int), Value: Matrix/Vector
         self.A_inv: Dict[int, np.ndarray] = {}  # Inverse of context covariance
         self.b: Dict[int, np.ndarray] = {}  # context-reward relationship
 
-    def _init_arm(self, arm_id: int):
+    def _init_arm(self, arm_id: int) -> None:
         """
         Lazy initialization: if we haven't seen this book ID before,
         create its A_inv and b matrices.
@@ -69,10 +71,10 @@ class LinUCBRecommender(BaseRecommender):
 
             # UCB Score Calculation
             mean = theta.T @ x  # Mean prediction (exploitation)
-            
+
             # Variance calculation (exploration term)
             var = np.sqrt(x.T @ A_inv @ x)
-            
+
             p = (mean + self.alpha * var).item()
             scores.append(p)
 
@@ -85,11 +87,11 @@ class LinUCBRecommender(BaseRecommender):
 
         return chosen_arms
 
-    def update(self, context, arm, reward):
+    def update(self, context, arm, reward) -> None:
         """
         Updates the model parameters for a specific arm using the observed feedback.
 
-        This performs an online update of the inverse covariance matrix A_inv 
+        This performs an online update of the inverse covariance matrix A_inv
         using the Sherman-Morrison formula and updates vector b.
 
         Args:
@@ -99,13 +101,95 @@ class LinUCBRecommender(BaseRecommender):
         """
         self._init_arm(arm)
         x = context.reshape(-1, 1)
-        
+
         self.b[arm] += reward * x
-        
+
         A_inv_old = self.A_inv[arm]
-        
+
         numerator = (A_inv_old @ x) @ (x.T @ A_inv_old)
-        
+
         denominator = 1.0 + (x.T @ A_inv_old @ x).item()
-        
+
         self.A_inv[arm] = A_inv_old - (numerator / denominator)
+
+    def _to_dict(self) -> dict:
+        """
+        Serializes the internal state into a pure dictionary (JSON-friendly).
+        """
+        arms_data = {}
+        for arm_id, Ainv in self.A_inv.items():
+            b = self.b[arm_id]
+            arms_data[int(arm_id)] = {
+                "A_inv": Ainv.tolist(),
+                "b": b.tolist(),
+            }
+
+        return {
+            "d": self.d,
+            "alpha": self.alpha,
+            "arms": arms_data,
+        }
+
+    def _from_dict(self, data: dict) -> None:
+        """
+        Creates an instance from a serialized dictionary.
+        """
+        d = int(data["d"])
+        alpha = float(data["alpha"])
+
+        self.d = d
+        self.alpha = alpha
+
+        arms_data = data.get("arms", {})
+
+        self.A_inv = {}
+        self.b = {}
+
+        for arm_id_str, ab in arms_data.items():
+            arm_id = int(arm_id_str)
+            A_inv = np.array(ab["A_inv"], dtype=float)
+            b = np.array(ab["b"], dtype=float).reshape(-1, 1)
+            self.A_inv[arm_id] = A_inv
+            self.b[arm_id] = b
+
+    def save_state(self, path: str):
+        data = self._to_dict()
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+    def load_state(self, path: str, valid_arms: list[int], d_expected: int) -> None:
+        """
+        Loads the state of a file, reconciling it with the current arms.
+
+        - If the file does not exist, does nothing.
+        - If d does not match, ignores the file.
+        - For new arms, sets A = I, b = 0.
+        - For removed arms, the parameters are discarded.
+        """
+        if not os.path.exists(path):
+            return
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        file_d = int(data.get("d", -1))
+        if file_d != d_expected:
+            # feature_dim changed, ignore previous state
+            return
+
+        self._from_dict(data)
+
+        I = np.eye(self.d)
+        zero = np.zeros((self.d, 1))
+
+        # ensures that all valid arms exist
+        for arm_id in valid_arms:
+            if arm_id not in self.A_inv:
+                self.A_inv[arm_id] = I.copy()
+                self.b[arm_id] = zero.copy()
+
+        # remove arms that are no longer valid
+        to_remove = [arm for arm in list(self.A_inv.keys()) if arm not in valid_arms]
+        for arm_id in to_remove:
+            del self.A_inv[arm_id]
+            del self.b[arm_id]

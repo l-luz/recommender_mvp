@@ -31,11 +31,11 @@ def test_linucb_update_adjusts_parameters():
 
     recommender.update(context, arm=5, reward=1.0)
 
-    assert 5 in recommender.A
+    assert 5 in recommender.A_inv
     assert 5 in recommender.b
     expected_A = np.eye(3) + np.outer(context, context)
     expected_b = context.reshape(-1, 1)
-    assert np.allclose(recommender.A[5], expected_A)
+    assert np.allclose(recommender.A_inv[5], expected_A)
     assert np.allclose(recommender.b[5], expected_b)
 
 
@@ -52,7 +52,7 @@ def test_online_trainer_flushes_batch():
     trainer.add_feedback(c2, arm=2, reward=0.2)
     assert len(trainer.buffer) == 0  # buffer flushed
 
-    assert 1 in recommender.A and 2 in recommender.A
+    assert 1 in recommender.A_inv and 2 in recommender.A_inv
 
 
 def test_context_features_default_shape():

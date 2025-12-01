@@ -6,7 +6,7 @@ from app.core.recommender.linucb import LinUCBRecommender
 from app.core.training import OnlineTrainer
 from app.core.context_features import ContextFeatures
 from app.utils.config import RECOMMENDER_CONFIG
-from sqlalchemy.orm import Session  # Importação para tipagem da sessão DB
+from sqlalchemy.orm import Session
 from app.db import crud
 
 recommender: LinUCBRecommender | None = None
@@ -31,7 +31,6 @@ def init_runtime(db: Session):
     n_arms = len(BOOK_IDS)
     RECOMMENDER_CONFIG["n_arms"] = n_arms
 
-    # 2. Configura as Features e o Modelo
     features = ContextFeatures()
     RECOMMENDER_CONFIG["feature_dim"] = features.feature_dim
 
@@ -41,10 +40,20 @@ def init_runtime(db: Session):
         alpha=RECOMMENDER_CONFIG["alpha"],
     )
 
+    model_path = RECOMMENDER_CONFIG.get("model_path")
+    if model_path:
+        try:
+            recommender.load_state(
+                path=model_path,
+                valid_arms=BOOK_IDS,
+                d_expected=features.feature_dim,
+            )
+        except Exception as e:
+            print(f"[WARN] Falha ao carregar estado LinUCB: {e}")
+
     trainer = OnlineTrainer(
         recommender=recommender, batch_size=RECOMMENDER_CONFIG["batch_size"]
     )
-
 
 __all__ = [
     "recommender",

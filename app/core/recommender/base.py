@@ -48,3 +48,24 @@ class BaseRecommender:
         """
         for x, a, r in zip(contexts, arms, rewards):
             self.update(x, int(a), float(r))
+
+    def _to_dict(self) -> dict:
+        """
+        Serializes the internal state into a pure dictionary.
+        """
+        raise NotImplementedError
+
+    def _from_dict(self, data: dict) -> None:
+        """
+        Creates an instance from a serialized dictionary.
+        """
+        raise NotImplementedError
+
+    def save_state(self, path: str):
+        raise NotImplementedError
+
+    def load_state(self, path: str, valid_arms: list[int], d_expected: int) -> None:
+        """
+        Loads the state of a file, reconciling it with the current branches.
+        """
+        raise NotImplementedError
