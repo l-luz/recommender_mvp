@@ -183,3 +183,4 @@ cython_debug/
 /data
 data/database.db
 data/database.db
+/data
