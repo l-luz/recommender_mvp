@@ -1,4 +1,4 @@
-# Recommender MVP
+# **Recommender MVP**
 
 > **MVP de recomendação de livros com aprendizado por reforço contextual**
 
@@ -12,6 +12,7 @@ MVP de recomendação de livros usando bandido contextual (LinUCB), com backend 
 - Notebooks: experimentos de extração de dados, features e testes de exploração.
 
 ## Estrutura do Projeto
+```bash
 recommender_mvp/
 ├── app/ # Backend FastAPI
 │ ├── api/ # Rotas e schemas
@@ -24,7 +25,7 @@ recommender_mvp/
 ├── tests/ # Testes pytest
 ├── run.py # Sobe API + Streamlit
 └── requirements.txt
-
+```
 
 ## Pré-requisitos
 - Python 3.10+
@@ -63,15 +64,15 @@ streamlit run streamlit_app/Login.py
 ```
 
 ### 3. Acessar Aplicação
-Streamlit: http://localhost:8501
-FastAPI: http://127.0.0.1:8000
-Docs Swagger: http://127.0.0.1:8000/docs
+- **Streamlit:** http://localhost:8501
+- **FastAPI:** http://127.0.0.1:8000
+- **Docs Swagger:** http://127.0.0.1:8000/docs
 
 ## Configuração
 > **Edite app/utils/config.py para ajustar:**
-- Caminhos de dados (DATA_DIR, DATABASE_PATH)
-- Hiperparâmetros do LinUCB (alpha, feature_dim, batch_size)
-- Parâmetros de API/Streamlit (host, port, api_url, max_recommendations)
+- **Caminhos de dados** (DATA_DIR, DATABASE_PATH)
+- **Hiperparâmetros do LinUCB** (alpha, feature_dim, batch_size)
+- **Parâmetros de API/Streamlit** (host, port, api_url, max_recommendations)
 
 ## Notebooks
 - **data_extraction.ipynb:** extração/visualização de dados.
