@@ -77,7 +77,66 @@ def test_feedback_dislike_and_history(client, user_and_books):
     )
     hist = client.get(f"/feedback/user/{user.id}/history")
     data = hist.json()
-    assert data["dislikes"] == 1 and data["likes"] == 0
+
+    assert (
+        data["dislikes"] == 1
+        and data["likes"] == 0
+        and data["total_events"] == 1
+        and data["unique_books_interacted"] == 1
+    )
+
+def test_feedback_like_and_history(client, user_and_books):
+    """Tests registering a 'like' and then querying the user's history."""
+    user, books = user_and_books
+    client.post(
+        "/feedback/register",
+        json={
+            "user_id": user.id,
+            "book_id": books[0].id,
+            "action_type": "like",
+            "slate_id": "s1",
+            "pos": 1,
+        },
+    )
+    hist = client.get(f"/feedback/user/{user.id}/history")
+    data = hist.json()
+    assert (
+        data["dislikes"] == 0
+        and data["likes"] == 1
+        and data["total_events"] == 1
+        and data["unique_books_interacted"] == 1
+    )
+
+def test_feedback_clear_and_history(client, user_and_books):
+    """Tests registering a 'clear' event and its impact on history."""
+    user, books = user_and_books
+    client.post(
+        "/feedback/register",
+        json={
+            "user_id": user.id,
+            "book_id": books[0].id,
+            "action_type": "like",
+            "slate_id": "s1",
+            "pos": 1,
+        },
+    )
+
+    client.post(
+        "/feedback/register",
+        json={
+            "user_id": user.id,
+            "book_id": books[0].id,
+            "action_type": "clear",
+        },
+    )
+    hist = client.get(f"/feedback/user/{user.id}/history")
+    data = hist.json()
+    assert (
+        data["dislikes"] == 0
+        and data["likes"] == 1
+        and data["total_events"] == 2
+        and data["unique_books_interacted"] == 1
+    )
 
 
 def test_feedback_likes_dislikes_lists(client, user_and_books):
