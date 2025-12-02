@@ -153,6 +153,9 @@ class LinUCBRecommender(BaseRecommender):
             self.b[arm_id] = b
 
     def save_state(self, path: str):
+        """
+        Saves the current state to a file.
+        """
         data = self._to_dict()
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f)

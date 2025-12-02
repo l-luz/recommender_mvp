@@ -1,12 +1,12 @@
 """
 Online model update (mini-batchs)
 """
+import threading
 
 from typing import List, Tuple
 import numpy as np
 
 from app.utils.config import RECOMMENDER_CONFIG
-from .context_features import ContextFeatures
 
 
 class OnlineTrainer:
@@ -56,7 +56,16 @@ class OnlineTrainer:
 
         model_path = RECOMMENDER_CONFIG["model_path"]
         if model_path and hasattr(self.recommender, "save_state"):
-            try:
-                self.recommender.save_state(model_path)
-            except Exception as e:
-                print(f"[WARN] Falha ao salvar estado LinUCB: {e}")
+            # Performs the save in a separate thread so as not to block
+            save_thread = threading.Thread(
+                target=self._save_state_thread, args=(model_path,)
+            )
+            save_thread.start()
+
+    def _save_state_thread(self, path: str):
+        """Função alvo para a thread de salvamento, com tratamento de erro."""
+        try:
+            self.recommender.save_state(path)
+            print(f"[INFO] Estado do modelo salvo em {path}")
+        except Exception as e:
+            print(f"[WARN] Falha ao salvar estado LinUCB em background: {e}")
