@@ -311,19 +311,6 @@ def get_book_authors_ids(
 
 
 # ==================== EVENT ====================
-def _reward_from_action(action_type: models.ActionType) -> float:
-    """
-    Simple reward policy:
-    like=1.0, dislike=0.0,
-    # TODO: click=0.3, info=0.1
-    """
-    if action_type == models.ActionType.LIKE:
-        return 1.0
-    if action_type == models.ActionType.CLEAR:
-        return 0.3
-    return 0.0
-
-
 def create_event(
     db: Session,
     user_id: int,
@@ -332,11 +319,11 @@ def create_event(
     pos: int,
     action_type: str,
     ctx_features: Optional[str] = None,
+    reward: float = 0.0,
     reward_w: float = 0.0,
 ) -> models.Event:
     """Records an event (like, dislike, click)"""
     action_enum = models.ActionType(action_type)
-    reward = _reward_from_action(action_enum)
 
     event = models.Event(
         user_id=user_id,

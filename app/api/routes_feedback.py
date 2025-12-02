@@ -6,12 +6,12 @@ import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db import crud, models, database
+from app.db import crud, database
 from app.db.models import ActionType
 from app.api import schemas
 from app.core import rl_runtime as rl
 from app.core.context_features import ContextFeatures
-
+from  typing  import Tuple
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 
@@ -30,14 +30,35 @@ def _feedback_type_to_action_type(action_type: schemas.ActionType) -> ActionType
     return mapping[action_type]
 
 
-def _calculate_reward(action_type: schemas.ActionType) -> float:
-    """Calculate reward based on feedback type"""
-    rewards = {
-        schemas.ActionType.LIKE: 1.0,
-        schemas.ActionType.CLEAR: 0.5,
-        schemas.ActionType.DISLIKE: -1,
-    }
-    return rewards[action_type]
+def _calculate_reward(
+    db: Session, user_id: int, book_id: int, action: schemas.ActionType
+) -> Tuple[float, float]:
+    """
+    Calculate:
+    - reward: instant signal for the model (LinUCB)
+    - new_state: accumulated reward to store in reward_w
+
+        Rules:
+    LIKE    -> reward = +1.0, accumulates +1
+    DISLIKE -> reward = -1.0, accumulates -1
+    CLEAR   -> reward =  0.3, resets accumulated value
+    """
+    last_event = crud.get_user_last_book_event(db, user_id, book_id)
+    prev_state = last_event.reward_w if last_event else 0.0
+
+    if action == schemas.ActionType.LIKE:
+        reward = 1.0
+        new_state = prev_state + 1.0
+
+    elif action == schemas.ActionType.DISLIKE:
+        reward = -1.0
+        new_state = prev_state - 1.0
+
+    else:  
+        reward = 0.3
+        new_state = 0.0  # reset
+
+    return reward, new_state
 
 
 #
@@ -73,15 +94,19 @@ def register_feedback(
             status_code=404, detail=f"Book {feedback.book_id} not found"
         )
 
-    # Convert feedback type
+    # Convert feedback type (API -> DB)
     action_type = _feedback_type_to_action_type(feedback.action_type)
 
-    last_event = crud.get_user_last_book_event(db, feedback.user_id, feedback.book_id)
-    # Calculate reward based on action type
-    reward = _calculate_reward(feedback.action_type)
-
-    slate_id = feedback.slate_id or ""
-    pos = feedback.pos or -1
+    # Calculates instant reward (model) + accumulated state (reward_w)
+    reward, new_state = _calculate_reward(
+        db=db,
+        user_id=feedback.user_id,
+        book_id=feedback.book_id,
+        action=feedback.action_type,
+    )
+    print(type(feedback.pos))
+    slate_id = feedback.slate_id != None if feedback.slate_id else ""
+    pos = feedback.pos if feedback.pos != None else -1
 
     ctx = ContextFeatures().get_context(
         user_id=feedback.user_id, book_id=feedback.book_id, db=db
@@ -96,12 +121,16 @@ def register_feedback(
             book_id=feedback.book_id,
             slate_id=slate_id,
             pos=pos,
-            action_type=action_type.value,  # Convert Enum to string
-            reward_w=reward,  # weight-adjusted reward
+            action_type=action_type.value,
+            reward=reward, 
+            reward_w=new_state,
             ctx_features=ctx_json,
         )
+
         if rl.trainer is None:
             raise RuntimeError("RL trainer not initialized")
+
+        # modelo aprende com o reward instantâneo
         rl.trainer.add_feedback(ctx, arm_index, reward)
 
         return schemas.FeedbackResponse(
@@ -114,6 +143,7 @@ def register_feedback(
         raise HTTPException(
             status_code=500, detail=f"Error registering feedback: {str(e)}"
         )
+
 
 
 @router.get("/user/{user_id}/likes", response_model=schemas.BookList)
@@ -221,9 +251,11 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
             dislikes_count += 1
 
     return {
-        "user_id": user_id,
+        "id": user.id,
+        "username": user.username,
+        "preferred_genres": getattr(user, "preferred_genres", None),
         "total_events": len(all_events),
         "likes": likes_count,
         "dislikes": dislikes_count,
-        "unique_books_interacted": len(set(e.book_id for e in all_events)),  # type: ignore
+        "unique_books_interacted": len({e.book_id for e in all_events}),  # type: ignore
     }
