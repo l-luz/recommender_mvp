@@ -4,6 +4,7 @@ from app.db import crud, models
 
 
 def test_feedback_register_like(client, user_and_books, db_session):
+    """Tests registering a 'like' event and verifies it's saved to the DB."""
     user, books = user_and_books
     target_book = books[0]
 
@@ -30,6 +31,7 @@ def test_feedback_register_like(client, user_and_books, db_session):
 
 
 def test_feedback_user_not_found(client):
+    """Checks if registering feedback for a non-existent user returns 404."""
     resp = client.post(
         "/feedback/register",
         json={
@@ -44,6 +46,7 @@ def test_feedback_user_not_found(client):
 
 
 def test_feedback_book_not_found(client):
+    """Checks if registering feedback for a non-existent book returns 404."""
     reg = client.post("/users/register", json={"username": "fb", "password": "pw"})
     user_id = reg.json()["event_id"]
     resp = client.post(
@@ -60,6 +63,7 @@ def test_feedback_book_not_found(client):
 
 
 def test_feedback_dislike_and_history(client, user_and_books):
+    """Tests registering a 'dislike' and then querying the user's history."""
     user, books = user_and_books
     client.post(
         "/feedback/register",
@@ -77,6 +81,7 @@ def test_feedback_dislike_and_history(client, user_and_books):
 
 
 def test_feedback_likes_dislikes_lists(client, user_and_books):
+    """Verifies that the user's lists of 'likes' and 'dislikes' are returned correctly."""
     user, books = user_and_books
     client.post(
         "/feedback/register",

@@ -2,6 +2,7 @@
 
 
 def test_root_endpoint(client):
+    """Tests if the API root endpoint is working correctly."""
     response = client.get("/")
     assert response.status_code == 200
     payload = response.json()
@@ -10,6 +11,7 @@ def test_root_endpoint(client):
 
 
 def test_user_registration_and_login_flow(client):
+    """Tests the full user registration and login sequence."""
     reg = client.post(
         "/users/register", json={"username": "api_user", "password": "secret"}
     )
@@ -29,22 +31,26 @@ def test_user_registration_and_login_flow(client):
 
 
 def test_register_user_conflict(client, db_session):
+    """Ensures registering a user with a duplicate username fails."""
     client.post("/users/register", json={"username": "dup", "password": "x"})
     resp = client.post("/users/register", json={"username": "dup", "password": "x"})
     assert resp.status_code == 400
 
 
 def test_login_invalid_user(client):
+    """Tests login failure for a non-existent user."""
     resp = client.post("/users/login", json={"username": "ghost", "password": "x"})
     assert resp.status_code == 401
 
 
 def test_profile_not_found(client):
+    """Checks if fetching a non-existent user profile returns 404."""
     resp = client.get("/users/profile/9999")
     assert resp.status_code == 404
 
 
 def test_profile_update_empty_genres(client):
+    """Tests updating a user profile with an empty list of genres."""
     reg = client.post("/users/register", json={"username": "nog", "password": "pw"})
     user_id = reg.json()["event_id"]
     resp = client.put(
@@ -55,12 +61,14 @@ def test_profile_update_empty_genres(client):
 
 
 def test_get_genres(client):
+    """Checks if the genres endpoint returns the list of categories."""
     resp = client.get("/users/genres")
     assert resp.status_code == 200
     assert "categories" in resp.json()
 
 
 def test_profile_update_and_retrieval(client):
+    """Tests updating and then retrieving a user profile."""
     reg = client.post(
         "/users/register", json={"username": "profile_user", "password": "secret"}
     )

@@ -10,6 +10,7 @@ from app.core import rl_runtime
 
 
 def test_linucb_ranks_by_confidence():
+    """Verifies that LinUCB ranks arms based on the highest UCB."""
     recommender = LinUCBRecommender(n_arms=3, d=4, alpha=1.0)
     candidate_arms = [10, 11, 12]
     contexts = np.array(
@@ -26,6 +27,7 @@ def test_linucb_ranks_by_confidence():
 
 
 def test_linucb_update_adjusts_parameters():
+    """Tests if the update method correctly adjusts the A and b matrices."""
     recommender = LinUCBRecommender(n_arms=1, d=3, alpha=0.5)
     context = np.array([1.0, 2.0, 0.0])
 
@@ -40,6 +42,7 @@ def test_linucb_update_adjusts_parameters():
 
 
 def test_online_trainer_flushes_batch():
+    """Ensures the OnlineTrainer processes the buffer when it hits batch_size."""
     recommender = LinUCBRecommender(n_arms=5, d=2, alpha=0.5)
     trainer = OnlineTrainer(recommender=recommender, batch_size=2)
 
@@ -56,6 +59,7 @@ def test_online_trainer_flushes_batch():
 
 
 def test_context_features_default_shape():
+    """Checks the dimensionality of the default context feature vector."""
     features = ContextFeatures()
     ctx_vector = features.get_context(user_id=1, book_id=1, db=None)
 
@@ -64,6 +68,7 @@ def test_context_features_default_shape():
 
 
 def test_context_uses_db_fields(db_session):
+    """Tests if context features are altered based on database data."""
     user = crud.create_user(db_session, "cf", "pw")
     book = crud.create_book(
         db_session, "Book", authors=["A1"], categories=["G1"], description="d"
@@ -76,6 +81,7 @@ def test_context_uses_db_fields(db_session):
 
 
 def test_arm_index_matches_books(db_session):
+    """Ensures the runtime arm index corresponds to books in the database."""
     books = [
         crud.create_book(
             db_session, f"B{i}", authors=["A"], categories=["C"], description="d"

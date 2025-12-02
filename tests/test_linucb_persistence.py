@@ -1,10 +1,7 @@
-# tests/test_linucb_persistence.py
+"""Tests for the LinUCB model persistence."""
 
 import json
-import os
-
 import numpy as np
-import pytest
 
 from app.core.recommender.linucb import LinUCBRecommender
 from app.core.training import OnlineTrainer
@@ -36,6 +33,8 @@ def _build_simple_model(d: int = 3):
 
 def test_linucb_save_and_load_preserves_parameters(tmp_path):
     """
+    Ensures that saving and loading a model preserves its internal state.
+
     Verify that:
     - save_state() saves A and b to file
     - load_state() reconstructs the model consistently
@@ -73,10 +72,7 @@ def test_linucb_save_and_load_preserves_parameters(tmp_path):
 
 
 def test_linucb_state_ignored_if_dimension_mismatch(tmp_path):
-    """
-    If feature_dim(d) changes, load_state should ignore the file
-    (i.e., A/b need to be reset).
-    """
+    """Tests that loading a state with a different feature dimension is ignored."""
     # original model with d=3
     rec_orig, arms = _build_simple_model(d=3)
     model_path = tmp_path / "linucb_state.json"
@@ -99,10 +95,7 @@ def test_linucb_state_ignored_if_dimension_mismatch(tmp_path):
 
 
 def test_online_trainer_flush_saves_model(tmp_path, monkeypatch):
-    """
-    Verify that OnlineTrainer.flush() calls save_state()
-    and generates the file in the path configured.
-    """
+    """Verifies that OnlineTrainer.flush() triggers a model save."""
     model_path = tmp_path / "linucb_state_trainer.json"
 
     RECOMMENDER_CONFIG["model_path"] = str(model_path)
