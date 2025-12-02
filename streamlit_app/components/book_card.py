@@ -50,8 +50,14 @@ def render_book_card(book: Dict, idx: int, slate_idx: int):
 
     with col_img:
         image = book.get("image", None)
-        if image and image != "N/A":
-            st.image(image=image, width=100)
+        try:
+            if image and image != "N/A":
+                st.image(image=image, width=100)
+            else:
+                raise Exception()
+        except:
+            st.write(f"📖")
+
 
     with col_info:
         st.write(f"**{book.get('title', 'N/A')}**")

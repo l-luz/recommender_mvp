@@ -44,8 +44,13 @@ def render_feedback_card(book: Dict, idx: int):
     col1, col2, col3 = st.columns([2, 4, 1])
     with col1:
         image = book.get("image", None)
-        if image and image != "N/A":
-            st.image(image=image, width=100)
+        try:
+            if image and image != "N/A":
+                st.image(image=image, width=100)
+            else:
+                raise Exception()
+        except:
+            st.write(f"📖")
     with col2:
         st.write(f"**{book.get('title', 'N/A')}** - {book.get('authors', 'N/A')}")
         st.write(
