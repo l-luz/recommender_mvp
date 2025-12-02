@@ -45,6 +45,9 @@ def _calculate_reward(
     """
     last_event = crud.get_user_last_book_event(db, user_id, book_id)
     prev_state = last_event.reward_w if last_event else 0.0
+    prev_state = float(prev_state) # type: ignore
+    reward = float(0.0)
+    new_state = float(0.0)
 
     if action == schemas.ActionType.LIKE:
         reward = 1.0
@@ -52,7 +55,7 @@ def _calculate_reward(
 
     elif action == schemas.ActionType.DISLIKE:
         reward = -1.0
-        new_state = prev_state - 1.0
+        new_state = float(prev_state - 1.0)
 
     else:  
         reward = 0.3
@@ -119,7 +122,7 @@ def register_feedback(
             db=db,
             user_id=feedback.user_id,
             book_id=feedback.book_id,
-            slate_id=slate_id,
+            slate_id=str(slate_id),
             pos=pos,
             action_type=action_type.value,
             reward=reward, 
@@ -172,8 +175,8 @@ def get_user_likes(user_id: int, db: Session = Depends(database.get_db)) -> dict
             {
                 "id": book.id,
                 "title": book.title,
-                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
-                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",
+                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",
                 "avg_rating": book.avg_rating,
                 "description": book.description,
                 "image": book.get_image
@@ -210,8 +213,8 @@ def get_user_dislikes(user_id: int, db: Session = Depends(database.get_db)) -> d
             {
                 "id": book.id,
                 "title": book.title,
-                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",  # type: ignore
-                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",  # type: ignore
+                "authors": ",".join(book.get_authors_list) if book.get_authors_list else "N/A",
+                "categories": ",".join(book.get_categories_list) if book.get_categories_list else "N/A",
                 "avg_rating": book.avg_rating,
                 "description": book.description,
                 "image": book.get_image
@@ -245,9 +248,9 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
     dislikes_count = 0
 
     for event in all_events:
-        if str(event.action_type) == "ActionType.LIKE" or str(event.action_type) == "like":  # type: ignore
+        if str(event.action_type) == "ActionType.LIKE" or str(event.action_type) == "like":
             likes_count += 1
-        elif str(event.action_type) == "ActionType.DISLIKE" or str(event.action_type) == "dislike":  # type: ignore
+        elif str(event.action_type) == "ActionType.DISLIKE" or str(event.action_type) == "dislike":
             dislikes_count += 1
 
     return {
@@ -257,5 +260,5 @@ def get_user_history(user_id: int, db: Session = Depends(database.get_db)) -> di
         "total_events": len(all_events),
         "likes": likes_count,
         "dislikes": dislikes_count,
-        "unique_books_interacted": len({e.book_id for e in all_events}),  # type: ignore
+        "unique_books_interacted": len({e.book_id for e in all_events}),
     }

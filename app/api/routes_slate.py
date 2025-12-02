@@ -51,13 +51,13 @@ def get_recommendations(
                 data = {
                     "book_id": b_idx,
                     "title": book.title,
-                    "description": book.description if book.description != "None" else "No description available.",
+                    "description": book.description if str(book.description) != "None" else "No description available.",
                     "score": book.avg_rating,
                     "image": book.get_image
                     or "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
                 }
-                data["authors"] = ",".join(book.get_authors_list) if book.get_authors_list else "N/A"  # type: ignore
-                data["categories"] = ",".join(book.get_categories_list) if book.get_categories_list else "N/A"  # type: ignore
+                data["authors"] = ",".join(book.get_authors_list) if book.get_authors_list else "N/A"
+                data["categories"] = ",".join(book.get_categories_list) if book.get_categories_list else "N/A"
                 recommended_data.append(data)
 
         return {
@@ -84,6 +84,9 @@ def _random_approach(db, user_id, n_items):
 def _rl_approach(db, user_id, n_items):
     available_books = crud.get_user_available_books(db, user_id)
 
+    if not available_books:
+        return []
+
     candidate_books = random.sample(available_books, k=min(len(available_books), 30))
 
     contexts = []
@@ -93,7 +96,7 @@ def _rl_approach(db, user_id, n_items):
         raise RuntimeError("RL trainer not initialized")
 
     for book in candidate_books:
-        ctx = rl.features.get_context(user_id, book.id, db=db)
+        ctx = rl.features.get_context(user_id, book.id, db=db) # type: ignore
         contexts.append(ctx)
         arms.append(book.id)
 

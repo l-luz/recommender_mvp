@@ -25,6 +25,7 @@ def _load_item_config(path: str = RECOMMENDER_CONFIG["item_config"]):
       "top_publishers": List(str)
     """
     if not os.path.exists(path):
+        print(f"[WARN] Arquivo de configuração de itens não encontrado em '{path}'. Usando listas vazias.")
         return {
             "top_categories_ids": [],
             "top_authors_ids": [],

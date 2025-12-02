@@ -107,7 +107,7 @@ def get_profile(user_id: int, db: Session = Depends(database.get_db)) -> dict:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
 
     genres_list = []
-    if user.preferred_genres:  # type: ignore
+    if str(user.preferred_genres):
         genres_list = user.preferred_genres.split(",")
     likes = crud.count_user_events(db, user.id, schemas.ActionType.LIKE)  # type: ignore
     dislikes = crud.count_user_events(db, user.id, schemas.ActionType.DISLIKE)  # type: ignore
@@ -178,7 +178,7 @@ def get_genre_options(
         List of genres
     """
     categories = crud.get_all_categories(db)
-    genre_strings: list[str] = [genre.name for genre in categories]  # type: ignore
+    genre_strings: list[str] = [str(genre.name) for genre in categories]
 
     try:
         return schemas.CategoryList(categories=genre_strings)

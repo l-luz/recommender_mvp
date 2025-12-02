@@ -1,3 +1,3 @@
 """
-Utilitários gerais
+General utilities
 """
