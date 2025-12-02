@@ -104,7 +104,7 @@ def register_feedback(
         book_id=feedback.book_id,
         action=feedback.action_type,
     )
-    print(type(feedback.pos))
+
     slate_id = feedback.slate_id != None if feedback.slate_id else ""
     pos = feedback.pos if feedback.pos != None else -1
 

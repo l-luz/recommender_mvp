@@ -11,6 +11,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 EMBEDDINGS_DIR = DATA_DIR / "embeddings"
+MODELS_DIR = DATA_DIR / "models"
 DATABASE_PATH = DATA_DIR / "database.db"
 
 
@@ -24,8 +25,9 @@ RECOMMENDER_CONFIG = {
     "feature_dim": 10,  # Feature dimensionality
     "model_type": "linucb",
     "alpha": 0.5,  # LinUCB exploration parameter
-    "batch_size": 32,  # Mini-batch actions size for update
+    "batch_size": 5,  # Mini-batch actions size for update
     "item_config": EMBEDDINGS_DIR / "item_config.json",
+    "model_path": MODELS_DIR / "linucb_model.json",
 }
 
 # Streamlit Settings

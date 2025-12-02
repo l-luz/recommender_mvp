@@ -68,7 +68,7 @@ def main():
         st.rerun()
 
     slate = st.session_state.get("slate", {})
-    recommendations = slate.get("recommendations", [])
+    recommendations = slate.get("recommendations", []) if slate else []
     slate_id = slate.get("slate_id")
 
     if recommendations:
@@ -78,11 +78,6 @@ def main():
                 render_book_card(book, idx, slate_id)
     else:
         st.info("📭 Nenhuma recomendação disponível no momento.")
-        if st.button("🔎 Tentar buscar novamente"):
-            with st.spinner("Buscando..."):
-                fetch_slate(user_id)
-            st.rerun()
-
 
 if __name__ == "__main__":
     main()

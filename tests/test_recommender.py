@@ -35,9 +35,11 @@ def test_linucb_update_adjusts_parameters():
 
     assert 5 in recommender.A_inv
     assert 5 in recommender.b
-    expected_A = np.eye(3) + np.outer(context, context)
+
+    A_orig = np.eye(3)
+    A_new = A_orig + np.outer(context, context)
     expected_b = context.reshape(-1, 1)
-    assert np.allclose(recommender.A_inv[5], expected_A)
+    assert np.allclose(np.linalg.inv(recommender.A_inv[5]), A_new)
     assert np.allclose(recommender.b[5], expected_b)
 
 
