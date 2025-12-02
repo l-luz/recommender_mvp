@@ -109,8 +109,12 @@ def test_online_trainer_flush_saves_model(tmp_path, monkeypatch):
 
     # will automatically flush when adding the second feedback
     trainer.add_feedback(ctx1, arm=10, reward=1.0)
-    trainer.add_feedback(ctx2, arm=20, reward=0.0)
+    save_thread = trainer.add_feedback(ctx2, arm=20, reward=0.0)
 
+    # Wait for the background save thread to finish before asserting
+    if save_thread:
+        save_thread.join()
+        
     assert model_path.exists(), "OnlineTrainer.flush não salvou o estado do modelo."
 
     # sanity check

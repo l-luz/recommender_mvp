@@ -38,7 +38,7 @@ class OnlineTrainer:
         self.buffer.append((context, arm, reward))
 
         if len(self.buffer) >= self.batch_size:
-            self.flush()
+            return self.flush()
 
     def flush(self):
         """
@@ -61,9 +61,10 @@ class OnlineTrainer:
                 target=self._save_state_thread, args=(model_path,)
             )
             save_thread.start()
+            return save_thread
 
     def _save_state_thread(self, path: str):
-        """Função alvo para a thread de salvamento, com tratamento de erro."""
+        """Target function for the rescue thread, with error handling."""
         try:
             self.recommender.save_state(path)
             print(f"[INFO] Estado do modelo salvo em {path}")

@@ -18,18 +18,14 @@ def test_slate_recommendations_success(client, user_and_books, db_session):
     # All returned books must exist in DB to avoid leaking stale ids
     from app.db import crud
 
-    for book_id in returned_ids:
-        assert crud.get_book(db_session, book_id) is not None
-
-
-def test_slate_invalid_user_returns_404(client):
-    """Checks if an invalid user ID returns a 404 error."""
-    response = client.post("/slate/recommend", params={"user_id": 999, "n_items": 1})
-    assert response.status_code == 404
+    db_books = {book.id for book in crud.get_all_books(db_session)}
+    assert returned_ids.issubset(
+        db_books
+    ), "API returned a book ID that does not exist in the database"
 
 
 def test_slate_404_user(client):
-    """Tests again that a non-existent user causes a 404 error."""
+    """Tests that a non-existent user causes a 404 error."""
     resp = client.post("/slate/recommend", params={"user_id": 9999, "n_items": 3})
     assert resp.status_code == 404
 
