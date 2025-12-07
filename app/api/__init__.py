@@ -1,3 +1,3 @@
 """
-Rotas da API FastAPI
+API FastAPI routes.
 """
